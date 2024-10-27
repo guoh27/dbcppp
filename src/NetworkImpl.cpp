@@ -340,10 +340,5 @@ std::map<std::string, std::unique_ptr<INetwork>> INetwork::LoadNetworkFromFile(c
             result.insert(std::make_pair("", std::move(net)));
         }
     }
-#ifdef ENABLE_KCD
-    else if (filename.extension() == ".kcd") {
-        result = LoadKCDFromIs(is);
-    }
-#endif
     return std::move(result);
 }
