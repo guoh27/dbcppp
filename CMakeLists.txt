@@ -25,7 +25,12 @@ file(GLOB headers "src/*.h")
 file(GLOB sources "src/*.cpp")
 
 add_library(${PROJECT_NAME} ${include} ${headers} ${sources})
-
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    # https://en.cppreference.com/w/cpp/filesystem
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.1")
+        target_link_libraries(${PROJECT_NAME} PRIVATE stdc++fs)
+    endif()
+endif()
 
 # CONFIGURE LIBRARY
 
@@ -53,7 +58,6 @@ install(TARGETS ${PROJECT_NAME}
 # ADDITIONAL: Tools, Tests & Examples
 
 if (build_tools)
-    add_subdirectory(third-party/cxxopts)
     add_subdirectory(tools/dbcppp)
 endif()
 

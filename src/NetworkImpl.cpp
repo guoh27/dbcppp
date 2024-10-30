@@ -324,9 +324,8 @@ bool NetworkImpl::operator!=(const INetwork& rhs) const
     return !(*this == rhs);
 }
 
-std::map<std::string, std::unique_ptr<INetwork>> INetwork::LoadNetworkFromFile(const std::filesystem::path& filename)
+std::unique_ptr<INetwork> INetwork::LoadNetworkFromFile(const std::filesystem::path& filename)
 {
-    auto result = std::map<std::string, std::unique_ptr<INetwork>>();
     auto is = std::ifstream(filename);
     if (!is.is_open())
     {
@@ -334,11 +333,21 @@ std::map<std::string, std::unique_ptr<INetwork>> INetwork::LoadNetworkFromFile(c
     }
     else if (filename.extension() == ".dbc")
     {
-        auto net = LoadDBCFromIs(is);
-        if (net)
-        {
-            result.insert(std::make_pair("", std::move(net)));
-        }
+        return LoadDBCFromIs(is);
     }
-    return std::move(result);
+    return nullptr;
+}
+
+std::unique_ptr<INetwork> INetwork::LoadNetworkFromFile(const std::filesystem::path& filename, std::string& error_message)
+{
+    auto is = std::ifstream(filename);
+    if (!is.is_open())
+    {
+        error_message = "Error: Could not open file " + filename.string() + "\n";
+    }
+    else if (filename.extension() == ".dbc")
+    {
+        return LoadDBCFromIs(is, error_message);
+    }
+    return nullptr;
 }

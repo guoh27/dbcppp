@@ -452,12 +452,13 @@ namespace dbcppp::DBCX3::Grammar
     struct TagSignalMultiplexerValue        : error_handler, annotate_on_success {};
     struct TagNetwork                       : error_handler, annotate_on_success {};
 }
-std::optional<dbcppp::DBCX3::AST::G_Network> dbcppp::DBCX3::ParseFromMemory(const char* begin, const char* end)
+std::optional<dbcppp::DBCX3::AST::G_Network> dbcppp::DBCX3::ParseFromMemory(const char* begin, const char* end, std::string &error_message)
 {
     using boost::spirit::x3::with;
     using boost::spirit::x3::error_handler_tag;
     using error_handler_type = boost::spirit::x3::error_handler<const char*>;
-    error_handler_type error_handler(begin, end, std::cerr);
+    std::ostringstream error_stream; 
+    error_handler_type error_handler(begin, end, error_stream);
     auto const parser =
         with<error_handler_tag>(std::ref(error_handler))
         [
@@ -468,5 +469,6 @@ std::optional<dbcppp::DBCX3::AST::G_Network> dbcppp::DBCX3::ParseFromMemory(cons
     {
         return gnet;
     }
+    error_message = error_stream.str();
     return std::nullopt;
 }

@@ -37,8 +37,10 @@ namespace dbcppp
             , std::vector<std::unique_ptr<IAttribute>>&& attribute_defaults
             , std::vector<std::unique_ptr<IAttribute>>&& attribute_values
             , std::string&& comment);
-        static std::map<std::string, std::unique_ptr<INetwork>> LoadNetworkFromFile(const std::filesystem::path& filename);
+        static std::unique_ptr<INetwork> LoadNetworkFromFile(const std::filesystem::path& filename);
+        static std::unique_ptr<INetwork> LoadNetworkFromFile(const std::filesystem::path& filename, std::string& error_message);
         static std::unique_ptr<INetwork> LoadDBCFromIs(std::istream &is);
+        static std::unique_ptr<INetwork> LoadDBCFromIs(std::istream &is, std::string& error_message);
 
 
         virtual std::unique_ptr<INetwork> Clone() const = 0;

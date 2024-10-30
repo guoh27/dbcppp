@@ -8,8 +8,6 @@
 #include <filesystem>
 #include <memory>
 
-#include <cxxopts.hpp>
-
 #include "dbcppp/Network.h"
 #include "dbcppp/Network2Functions.h"
 
@@ -21,8 +19,7 @@ void print_help()
 
 int main(int argc, char** argv)
 {
-    cxxopts::Options options("dbcppp", "");
-    if (argc < 2 || std::string("help") == argv[1])
+    if (argc != 4 || std::string("--help") == argv[1])
     {
         print_help();
         return 1;
@@ -30,44 +27,14 @@ int main(int argc, char** argv)
 
     if (std::string("dbc2") == argv[1])
     {
-        options.add_options()
-            ("h,help", "Produce help message")
-            ("f,format", "Output format (C, DBC, human)", cxxopts::value<std::string>())
-            ("dbc", "List of DBC files", cxxopts::value<std::vector<std::string>>());
-
-        for (std::size_t i = 1; i < argc - 1; i++)
+        if (std::string(argv[2]) == "--help")
         {
-            argv[i] = argv[i + 1];
-        }
-        auto vm = options.parse(argc - 1, argv);
-
-        if (vm.count("help"))
-        {
-            std::cout << "Usage:\ndbcppp dbc2c [--help] --format=<format>... --dbc=<dbc filename>...\n";
-            std::cout << options.help();
+            std::cout << "Usage:\ndbcppp dbc2c [--help] <format> <dbc filename>\n";
             return 1;
         }
-        if (!vm.count("format"))
-        {
-            std::cout << "Argument error: Argument --format=<format> missing\n";
-            return 1;
-        }
-        if (!vm.count("dbc"))
-        {
-            std::cout << "Argument error: At least one --dbc=<dbc> argument required\n";
-            return 1;
-        }
-        const auto& format = vm["format"].as<std::string>();
-        auto dbcs = vm["dbc"].as<std::vector<std::string>>();
-        auto net = dbcppp::INetwork::Create({}, {}, dbcppp::IBitTiming::Create(0, 0, 0), {}, {}, {}, {}, {}, {}, {}, {});
-        for (const auto& dbc : dbcs)
-        {
-            auto nets = dbcppp::INetwork::LoadNetworkFromFile(dbc);
-            for (auto& other : nets)
-            {
-                net->Merge(std::move(other.second));
-            }
-        }
+        const std::string format = argv[2]; 
+        auto net = dbcppp::INetwork::LoadNetworkFromFile(argv[3]);
+        if (!net) return 1;
         if (format == "C")
         {
             using namespace dbcppp::Network2C;
@@ -81,68 +48,20 @@ int main(int argc, char** argv)
         else if (format == "human")
         {
             using namespace dbcppp::Network2Human;
+            std::cout << "human\n";
             std::cout << *net;
         }
     }
     else if (std::string("decode") == argv[1])
     {
-        options.add_options()
-            ("h,help", "Produce help message")
-            ("bus", "List of buses in format <<bus name>:<DBC filename>>", cxxopts::value<std::vector<std::string>>());
-        for (std::size_t i = 1; i < argc - 1; i++)
+        std::string name = argv[2];
+        std::unique_ptr<dbcppp::INetwork> net = dbcppp::INetwork::LoadNetworkFromFile(argv[3]);
+        if (!net)
         {
-            argv[i] = argv[i + 1];
-        }
-        auto vm = options.parse(argc, argv);
-        if (vm.count("help"))
-        {
-            std::cout << "Usage:\ndbcppp decode [--help] --bus=<<bus name>:<DBC filename>>...\n";
-            std::cout << options.help();
+            std::cout << "error: could not load DBC '" << argv[3] << "'" << std::endl;
             return 1;
         }
-        if (!vm.count("bus"))
-        {
-            std::cout << "Argument error: At least one --bus=<<bus name>:<DBC filename>> argument required\n";
-            return 1;
-        }
-        const auto& opt_buses = vm["bus"].as<std::vector<std::string>>();
-        struct Bus
-        {
-            std::string name;
-            std::unique_ptr<dbcppp::INetwork> net;
-        };
-        std::unordered_map<std::string, Bus> buses;
-        for (const auto& opt_bus : opt_buses)
-        {
-            std::istringstream ss(opt_bus);
-            std::string opt;
-            Bus b;
-            if (std::getline(ss, opt, ':'))
-            {
-                b.name = opt;
-            }
-            else
-            {
-                std::cout << "error: could parse bus parameter" << std::endl;
-                return 1;
-            }
-            if (std::getline(ss, opt))
-            {
-                std::ifstream fdbc(opt);
-                b.net = dbcppp::INetwork::LoadDBCFromIs(fdbc);
-                if (!b.net)
-                {
-                    std::cout << "error: could not load DBC '" << opt << "'" << std::endl;
-                    return 1;
-                }
-            }
-            else
-            {
-                std::cout << "error: could parse bus parameter" << std::endl;
-                return 1;
-            }
-            buses.insert(std::make_pair(b.name, std::move(b)));
-        }
+
         // example line: vcan0  123   [3]  11 22 33
         std::regex regex_candump_line(
             // vcan0
@@ -163,13 +82,13 @@ int main(int argc, char** argv)
             "\\s*([0-9A-F]{2})?"
             "\\s*([0-9A-F]{2})?"
             "\\s*([0-9A-F]{2})?");
+
         std::string line;
         while (std::getline(std::cin, line))
         {
             std::cmatch cm;
             std::regex_match(line.c_str(), cm, regex_candump_line);
-            const auto& bus = buses.find(cm[1].str());
-            if (bus != buses.end())
+            if (name == cm[1].str())
             {
                 uint64_t msg_id = std::strtol(cm[2].str().c_str(), nullptr, 16);
                 uint64_t msg_size = std::atoi(cm[3].str().c_str());
@@ -178,8 +97,8 @@ int main(int argc, char** argv)
                 {
                     data[i] = uint8_t(std::strtol(cm[4 + i].str().c_str(), nullptr, 16));
                 }
-                auto beg_msg = bus->second.net->Messages().begin();
-                auto end_msg = bus->second.net->Messages().end();
+                auto beg_msg = net->Messages().begin();
+                auto end_msg = net->Messages().end();
                 auto iter = std::find_if(beg_msg, end_msg, [&](const dbcppp::IMessage& msg) { return msg.Id() == msg_id; });
                 if (iter != end_msg)
                 {

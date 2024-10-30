@@ -886,12 +886,28 @@ std::unique_ptr<INetwork> INetwork::LoadDBCFromIs(std::istream& is)
 {
     std::string str((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
     std::unique_ptr<dbcppp::INetwork> network;
-    if (auto gnet = dbcppp::DBCX3::ParseFromMemory(str.c_str(), str.c_str() + str.size()))
+    std::string error_message;
+    if (auto gnet = dbcppp::DBCX3::ParseFromMemory(str.c_str(), str.c_str() + str.size(), error_message))
+    {
+        network = DBCAST2Network(*gnet);
+    }
+    if (!network) {
+        std::cerr << error_message <<std::endl;
+    }
+    return network;
+}
+
+std::unique_ptr<INetwork> INetwork::LoadDBCFromIs(std::istream& is, std::string &error_message)
+{
+    std::string str((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
+    std::unique_ptr<dbcppp::INetwork> network;
+    if (auto gnet = dbcppp::DBCX3::ParseFromMemory(str.c_str(), str.c_str() + str.size(), error_message))
     {
         network = DBCAST2Network(*gnet);
     }
     return network;
 }
+
 extern "C"
 {
     DBCPPP_API const dbcppp_Network* dbcppp_NetworkLoadDBCFromFile(const char* filename)

@@ -311,6 +311,6 @@ namespace dbcppp
                 std::vector<G_SignalMultiplexerValue> signal_multiplexer_values;
             };
         }
-        std::optional<AST::G_Network> DBCPPP_API ParseFromMemory(const char* begin, const char* end);
+        std::optional<AST::G_Network> DBCPPP_API ParseFromMemory(const char* begin, const char* end, std::string &error_message);
     }
 }
