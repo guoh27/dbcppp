@@ -5,10 +5,10 @@ project("dbcppp" VERSION 3.8.0)
 # CONFIGURATION
 
 set(CMAKE_CXX_STANDARD 17)
-option(build_tools "Build dbcppp utility application" OFF)
-
-option(build_tests "Build tests" OFF)
-option(build_examples "Build examples" OFF)
+option(BUILD_DBCPPP_TOOLS "Build dbcppp utility application" OFF)
+option(BUILD_DBCPPP_TESTS "Build tests" OFF)
+option(BUILD_DBCPPP_EXAMPLES "Build examples" OFF)
+option(BUILD_DBCPPP_SHARED "Build shared library" ON)
 
 # DEPENDENCIES & Requirements
 
@@ -24,7 +24,12 @@ file(GLOB include "include/dbcppp/*.h")
 file(GLOB headers "src/*.h")
 file(GLOB sources "src/*.cpp")
 
-add_library(${PROJECT_NAME} ${include} ${headers} ${sources})
+if(BUILD_DBCPPP_SHARED)
+    add_library(${PROJECT_NAME} SHARED ${include} ${headers} ${sources})
+else()
+    add_library(${PROJECT_NAME} STATIC ${include} ${headers} ${sources})
+endif(BUILD_DBCPPP_SHARED)
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # https://en.cppreference.com/w/cpp/filesystem
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.1")
@@ -57,15 +62,15 @@ install(TARGETS ${PROJECT_NAME}
 
 # ADDITIONAL: Tools, Tests & Examples
 
-if (build_tools)
+if (BUILD_DBCPPP_TOOLS)
     add_subdirectory(tools/dbcppp)
 endif()
 
-if (build_tests)
+if (BUILD_DBCPPP_TESTS)
   add_subdirectory(tests)
 endif()
 
-if (build_examples)
+if (BUILD_DBCPPP_EXAMPLES)
   add_subdirectory(examples)
 endif()
 
