@@ -1,19 +1,23 @@
 [![Build Status](https://github.com/xR3b0rn/dbcppp/actions/workflows/linux.yml/badge.svg?branch=master)
+
 # dbcppp
+
 A C/C++ DBC file parser based on `boost.spirit`. This library is designed for decoding performance.
+
 # Features
+
 * very fast decoding
 * verbose parser output in error case
 * DBC is editable through C/C++ interface exported from the library
 * read/write DBC file
 * decode functionality for frames of arbitrarily byte length
 * [cantools](https://github.com/eerimoq/cantools) like decoding
-* [KCD](https://github.com/julietkilo/kcd) file format support
-
 
 # Getting started
+
 ## Build & Install
-```
+
+```bash
 git clone --recurse-submodules https://github.com/xR3b0rn/dbcppp.git
 cd dbcppp
 mkdir build
@@ -26,24 +30,33 @@ ldconfig # on Unix-systems only
 ```
 
 # Usage example
+
 ## Command line tool
+
 ### dbc2
+
+```bash
+# generate C source from DBC
+dbcparser dbc2 C file.dbc 
+# beauty or merge DBC
+dbcparser dbc2 DBC file1.dbc
+# print DBC in human readable format
+dbcparser dbc2 human file1.dbc
 ```
-# generate C source from DBC/KCD
-dbcparser dbc2 --dbc=file.dbc --format=C
-# beauty or merge DBC/KCD
-dbcparser dbc2 --dbc=file1.dbc --dbc=file2.kcd --format=DBC
-# print DBC/KCD in human readable format
-dbcparser dbc2 --dbc=file1.dbc --dbc=file2.kcd --format=human
-```
+
 ### decode
+
 [cantools](https://github.com/eerimoq/cantools) like decoding:
-```
+
+```bash
 candump any | dbcppp decode --bus=vcan0,file1.dbc --bus=vcan1,file2.dbc
 ```
+
 ## Library
+
 * [Examples](https://github.com/xR3b0rn/dbcppp/tree/master/examples)
 * `C++`
+
 ```C++
 #include <fstream>
 #include <dbcppp/Network.h>
@@ -81,7 +94,9 @@ int main()
     }
 }
 ```
+
 * `C`
+
 ```C
 #include <stdio.h>
 #include <dbcppp/CApi.h>
@@ -117,8 +132,11 @@ int main()
     dbcppp_NetworkFree(net);
 }
 ```
+
 # DBC data types
+
 ## Supported
+
 * version
 * new_symbols
 * bit_timing
@@ -137,12 +155,17 @@ int main()
 * signal_extended_value_type_list
 * signal_groups
 * signal_multiplexer_value
+
 ## Not supported yet
+
 * sigtype_attr_list
 * signal_type_refs
+
 # Decode-function
+
 The signals decode function is using prestored masks and fixed offsets to speed up calculation, therefore the decoding-function should be almost as fast as a code generated decode function would be. The assembly of the `decode`-function on its critical path (signed and byte swap must happen) looks like this (VS19 10.0.18362.0 compiler):
-```
+
+```text
 template <Alignment aAlignment, Signal::ByteOrder aByteOrder, Signal::ValueType aValueType, Signal::ExtendedValueType aExtendedValueType>
 double template_decode(const Signal* sig, const void* nbytes) noexcept
 00007FF8025BCA73  mov         rax,rcx  
@@ -159,8 +182,10 @@ double template_decode(const Signal* sig, const void* nbytes) noexcept
 00007FF8025BCAA1  cvtsi2sd    xmm0,rcx  
 00007FF8025BCAA6  ret   
 ```
+
 On the best path (no byteswap must take place and ExtendedValueType == Double) the decode function only has 5 instructions:
-```
+
+```text
 template <Alignment aAlignment, Signal::ByteOrder aByteOrder, Signal::ValueType aValueType, Signal::ExtendedValueType aExtendedValueType>
 double template_decode(const Signal* sig, const void* nbytes) noexcept
 00007FF8025BCAF0  mov         rax,qword ptr [rdx]  
@@ -169,8 +194,12 @@ double template_decode(const Signal* sig, const void* nbytes) noexcept
 00007FF8025BCAFD  movsd       xmm0,mmword ptr [data]  
 00007FF8025BCB03  ret  
 ```
+
 # Known issues
+
 * tests for decoding function for float/double is failing on some machines (currently only confirmed for System/s390x)
+
 # Similar projects
-  * [Vector_DBC](https://bitbucket.org/tobylorenz/vector_dbc/src/master/) Does basically the same, the biggest difference is that it uses `bison` instead of `boost::spirit` for grammar parsing
-  * [CAN BUS tools in Python 3 (cantools)](https://github.com/eerimoq/cantools) 
+
+* [Vector_DBC](https://bitbucket.org/tobylorenz/vector_dbc/src/master/) Does basically the same, the biggest difference is that it uses `bison` instead of `boost::spirit` for grammar parsing
+* [CAN BUS tools in Python 3 (cantools)](https://github.com/eerimoq/cantools)
