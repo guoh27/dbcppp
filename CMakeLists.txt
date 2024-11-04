@@ -39,6 +39,8 @@ endif()
 
 # CONFIGURE LIBRARY
 
+target_compile_options(${PROJECT_NAME} PRIVATE -Wno-switch)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES
     SOVERSION ${PROJECT_VERSION}
     PUBLIC_HEADER "${include}"

@@ -4,9 +4,9 @@
 
 using namespace dbcppp;
 
-bool bit_is_inbetween(const ISignal& sig, std::size_t i_bit, uint64_t switch_value = -1)
+bool bit_is_inbetween(const ISignal& sig, std::size_t i_bit, uint64_t switch_value = UINT64_MAX)
 {
-    if (switch_value != -1 &&
+    if (switch_value != UINT64_MAX &&
         sig.MultiplexerIndicator() == ISignal::EMultiplexer::MuxValue &&
         sig.MultiplexerSwitchValue() != switch_value)
     {
@@ -159,7 +159,7 @@ DBCPPP_API std::ostream& dbcppp::Network2Human::operator<<(std::ostream& os, con
                     auto iter = std::find_if(beg, end, [&](const ISignal& sig) { return bit_is_inbetween(sig, i_bit, mux_value); });
                     return iter != end ? &*iter : nullptr;
                 };
-            int64_t depth = 0;
+            uint64_t depth = 0;
             for (std::size_t i = 0; i < 8; i++)
             {
                 const auto* sig = find_cur_sig();
