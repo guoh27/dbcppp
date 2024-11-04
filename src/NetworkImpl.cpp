@@ -3,6 +3,7 @@
 #include <iomanip>
 #include "dbcppp/Network.h"
 #include "NetworkImpl.h"
+#include "Helper.h"
 
 using namespace dbcppp;
 
@@ -50,16 +51,25 @@ std::unique_ptr<INetwork> INetwork::Create(
     }
     for (auto& ad : attribute_definitions)
     {
+        if(ad->ObjectType() != IAttributeDefinition::EObjectType::Network){
+            throw std::runtime_error("Create INetwork with non network AttributeDefination: " + ad->Name());
+        }
         ads.push_back(std::move(static_cast<AttributeDefinitionImpl&>(*ad)));
         ad.reset(nullptr);
     }
     for (auto& ad : attribute_defaults)
     {
+        if(ad->ObjectType() != IAttributeDefinition::EObjectType::Network){
+            throw std::runtime_error("Create INetwork with non network AttributeDefault: " + ad->Name());
+        }
         avds.push_back(std::move(static_cast<AttributeImpl&>(*ad)));
         ad.reset(nullptr);
     }
     for (auto& av : attribute_values)
     {
+        if(av->ObjectType() != IAttributeDefinition::EObjectType::Network){
+            throw std::runtime_error("Create INetwork with non network AttributeValues: " + av->Name());
+        }
         avs.push_back(std::move(static_cast<AttributeImpl&>(*av)));
         av.reset(nullptr);
     }
@@ -245,38 +255,30 @@ void INetwork::Merge(std::unique_ptr<INetwork>&& other)
 {
     auto& self = static_cast<NetworkImpl&>(*this);
     auto& o = static_cast<NetworkImpl&>(*other);
-    for (auto& ns : o.newSymbols())
-    {
-        self.newSymbols().push_back(std::move(ns));
+
+    unique_merge(self.newSymbols(), o.newSymbols());
+    unique_merge_by_name(self.nodes(), o.nodes());
+    unique_merge_by_name(self.valueTables(), o.valueTables());
+
+    // merge message by id
+    for (MessageImpl& item2 : o.messages()) {
+        auto it = std::find_if(self.messages().begin(), self.messages().end(), [&item2](const MessageImpl& item1) {
+            return item1.Id() == item2.Id();
+        });
+        if (it != self.messages().end()) {
+            // merge it
+            it->Merge(std::move(item2));
+        } else {
+            // insert new
+            self.messages().push_back(std::move(item2));
+        }
     }
-    for (auto& n : o.nodes())
-    {
-        self.nodes().push_back(std::move(n));
-    }
-    for (auto& vt : o.valueTables())
-    {
-        self.valueTables().push_back(std::move(vt));
-    }
-    for (auto& m : o.messages())
-    {
-        self.messages().push_back(std::move(m));
-    }
-    for (auto& ev : o.environmentVariables())
-    {
-        self.environmentVariables().push_back(std::move(ev));
-    }
-    for (auto& ad : o.attributeDefinitions())
-    {
-        self.attributeDefinitions().push_back(std::move(ad));
-    }
-    for (auto& ad : o.attributeDefaults())
-    {
-        self.attributeDefaults().push_back(std::move(ad));
-    }
-    for (auto& av : o.attributeValues())
-    {
-        self.attributeValues().push_back(std::move(av));
-    }
+
+    unique_merge_by_name(self.environmentVariables(), o.environmentVariables());
+    unique_merge_by_name(self.attributeDefinitions(), o.attributeDefinitions());
+    unique_merge_by_name(self.attributeDefaults(), o.attributeDefaults());
+    unique_merge_by_name(self.attributeValues(), o.attributeValues());
+
     other.reset(nullptr);
 }
 bool NetworkImpl::operator==(const INetwork& rhs) const

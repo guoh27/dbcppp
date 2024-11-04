@@ -22,6 +22,10 @@ std::unique_ptr<IEnvironmentVariable> IEnvironmentVariable::Create(
     avs.reserve(attribute_values.size());
     for (auto& av : attribute_values)
     {
+        if (av->ObjectType() != IAttributeDefinition::EObjectType::EnvironmentVariable)
+        {
+            throw std::runtime_error("Create IEnvironmentVariable with non environmentVariable AttributeValues: " + av->Name());
+        }
         avs.push_back(std::move(static_cast<AttributeImpl&>(*av)));
         av.reset(nullptr);
     }

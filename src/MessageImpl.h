@@ -50,6 +50,8 @@ namespace dbcppp
         
         virtual bool operator==(const IMessage& rhs) const override;
         virtual bool operator!=(const IMessage& rhs) const override;
+
+        void Merge(MessageImpl &&other);
         
     private:
         uint64_t _id;

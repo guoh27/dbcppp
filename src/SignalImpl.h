@@ -65,6 +65,8 @@ namespace dbcppp
         virtual bool operator==(const ISignal& rhs) const override;
         virtual bool operator!=(const ISignal& rhs) const override;
 
+        void Merge(SignalImpl &&other);
+
     private:
         void SetError(EErrorCode code);
 

@@ -123,6 +123,7 @@ namespace dbcppp
         DBCPPP_MAKE_ITERABLE(ISignal, AttributeValues, IAttribute);
         DBCPPP_MAKE_ITERABLE(ISignal, SignalMultiplexerValues, ISignalMultiplexerValue);
 
+        void Merge(std::unique_ptr<ISignal>&& other);
     protected:
         // instead of using virtuals dynamic dispatching use function pointers
         raw_t (*_decode)(const ISignal* sig, const void* bytes) noexcept {nullptr};

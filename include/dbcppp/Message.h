@@ -61,5 +61,7 @@ namespace dbcppp
         virtual bool operator!=(const IMessage& message) const = 0;
 
         virtual EErrorCode Error() const = 0;
+
+        void Merge(std::unique_ptr<IMessage>&& other);
     };
 }

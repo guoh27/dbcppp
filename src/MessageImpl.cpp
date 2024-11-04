@@ -1,5 +1,6 @@
 #include <algorithm>
 #include "MessageImpl.h"
+#include "Helper.h"
 
 using namespace dbcppp;
 
@@ -25,11 +26,19 @@ std::unique_ptr<IMessage> IMessage::Create(
     }
     for (auto& av : attribute_values)
     {
+        if (av->ObjectType() != IAttributeDefinition::EObjectType::Message)
+        {
+            throw std::runtime_error("Create IMessage with non message AttributeDefination: " + av->Name());
+        }
         avs.push_back(std::move(static_cast<AttributeImpl&>(*av)));
         av.reset(nullptr);
     }
     for (auto& sg : signal_groups)
     {
+        if (sg->MessageId() != id)
+        {
+            throw std::runtime_error("Create IMessage with non message SignalGroup: " + sg->Name());
+        }
         sgs.push_back(std::move(static_cast<SignalGroupImpl&>(*sg)));
         sg.reset(nullptr);
     }
@@ -235,4 +244,60 @@ bool MessageImpl::operator==(const IMessage& rhs) const
 bool MessageImpl::operator!=(const IMessage& rhs) const
 {
     return !(*this == rhs);
+}
+
+void MessageImpl::Merge(MessageImpl &&o) {
+    // refuse to merge if id not same
+    if (_id != o._id) {
+        return;
+    }
+    compare_set(_name, o._name);
+    compare_set(_message_size, o._message_size);
+    compare_set(_transmitter, o._transmitter);
+    
+    unique_merge(_message_transmitters, o._message_transmitters);
+    // merge signal by name
+    for (SignalImpl& item2 : o._signals) {
+        auto it = std::find_if(_signals.begin(), _signals.end(), [&item2](const SignalImpl& item1) {
+            return item1.Name() == item2.Name();
+        });
+        if (it != _signals.end()) {
+            // merge it
+            it->Merge(std::move(item2));
+        } else {
+            // insert new
+            _signals.push_back(std::move(item2));
+        }
+    }
+    // same type attr name is unique in one message
+    unique_merge_by_name(_attribute_values, o._attribute_values);
+    // name is unique in one message(id same)
+    unique_merge_by_name(_signal_groups, o._signal_groups);
+    compare_set(_comment, o._comment);
+
+    // need to update the _mux_signal and error flag
+    _mux_signal = nullptr;
+    bool have_mux_value = false;
+    for (const auto& sig : _signals)
+    {
+        switch (sig.MultiplexerIndicator())
+        {
+        case ISignal::EMultiplexer::MuxValue:
+            have_mux_value = true;
+            break;
+        case ISignal::EMultiplexer::MuxSwitch:
+            _mux_signal = &sig;
+            break;
+        }
+    }
+    if (have_mux_value && _mux_signal == nullptr)
+    {
+        _error = EErrorCode::MuxValeWithoutMuxSignal;
+    }
+}
+
+void IMessage::Merge(std::unique_ptr<IMessage>&& other) {
+    auto& self = static_cast<MessageImpl&>(*this);
+    auto& o = static_cast<MessageImpl&>(*other);
+    self.Merge(std::move(o));
 }

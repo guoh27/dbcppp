@@ -61,4 +61,41 @@ namespace dbcppp
             value = bswap_64(value);
         }
     }
+    template<typename T>
+    inline void compare_set(T& v1, T& v2)
+    {
+        if (v1 != v2) {
+            v1 = std::move(v2);
+        }
+    }
+    template<typename T>
+    inline void unique_merge(std::vector<T>& v1, std::vector<T>& v2)
+    {
+        for (T& item : v2) {
+            if (std::find(v1.begin(), v1.end(), item) == v1.end()) {
+                v1.push_back(std::move(item));
+            }
+        }
+    }
+    template<typename T, typename R>
+    inline void unique_merge_by_attr(std::vector<T>& v1, std::vector<T>& v2, R (T::*func)() const)
+    {
+        for (T& item2 : v2) {
+            auto it = std::find_if(v1.begin(), v1.end(), [&item2, func](const T& item1) {
+                return (item1.*func)() == (item2.*func)();
+            });
+            if (it != v1.end()) {
+                // same name replace it
+                *it = std::move(item2);
+            } else {
+                // insert new
+                v1.push_back(std::move(item2));
+            }
+        }
+    }
+    template<typename T>
+    inline void unique_merge_by_name(std::vector<T>& v1, std::vector<T>& v2)
+    {
+        unique_merge_by_attr(v1, v2, &T::Name);
+    }
 }

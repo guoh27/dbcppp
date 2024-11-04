@@ -664,3 +664,49 @@ bool SignalImpl::operator!=(const ISignal& rhs) const
 {
     return !(*this == rhs);
 }
+
+void SignalImpl::Merge(SignalImpl &&o) {
+    // refuse to merge if name not same
+    if (_name != o._name) {
+        return;
+    }
+    compare_set(_multiplexer_indicator, o._multiplexer_indicator);
+    compare_set(_multiplexer_switch_value, o._multiplexer_switch_value);
+    compare_set(_start_bit, o._start_bit);
+    compare_set(_bit_size, o._bit_size);
+    compare_set(_byte_order, o._byte_order);
+    compare_set(_value_type, o._value_type);
+    compare_set(_factor, o._factor);
+    compare_set(_offset, o._offset);
+    compare_set(_minimum, o._minimum);
+    compare_set(_maximum, o._maximum);
+    compare_set(_unit, o._unit);
+    unique_merge(_receivers, o._receivers);
+    unique_merge_by_name(_attribute_values, o._attribute_values);
+    // compared by Value
+    unique_merge_by_attr(_value_encoding_descriptions, o._value_encoding_descriptions, &ValueEncodingDescriptionImpl::Value);
+    compare_set(_comment, o._comment);
+    compare_set(_extended_value_type, o._extended_value_type);
+    // compared by SwitchName
+    unique_merge_by_attr(_signal_multiplexer_values, o._signal_multiplexer_values, &SignalMultiplexerValueImpl::SwitchName);
+
+    // private var
+    compare_set(_mask, o._mask);
+    compare_set(_mask_signed, o._mask_signed);
+    compare_set(_fixed_start_bit_0, o._fixed_start_bit_0);
+    compare_set(_fixed_start_bit_1, o._fixed_start_bit_1);
+    compare_set(_byte_pos, o._byte_pos);
+    compare_set(_error, o._error);
+
+    // functions
+    compare_set(_decode, o._decode);
+    compare_set(_encode, o._encode);
+    compare_set(_raw_to_phys, o._raw_to_phys);
+    compare_set(_phys_to_raw, o._phys_to_raw);
+}
+
+void ISignal::Merge(std::unique_ptr<ISignal>&& other) {
+    auto& self = static_cast<SignalImpl&>(*this);
+    auto& o = static_cast<SignalImpl&>(*other);
+    self.Merge(std::move(o));
+}

@@ -11,6 +11,10 @@ std::unique_ptr<INode> INode::Create(
     std::vector<AttributeImpl> avs;
     for (auto& av : attribute_values)
     {
+        if (av->ObjectType() != IAttributeDefinition::EObjectType::Node)
+        {
+            throw std::runtime_error("Create INode with non node AttributeValues: " + av->Name());
+        }
         avs.push_back(std::move(static_cast<AttributeImpl&>(*av)));
         av.reset(nullptr);
     }
