@@ -30,6 +30,8 @@ else()
     add_library(${PROJECT_NAME} STATIC ${include} ${headers} ${sources})
 endif(BUILD_DBCPPP_SHARED)
 
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # https://en.cppreference.com/w/cpp/filesystem
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.1")

@@ -50,6 +50,12 @@ int main(int argc, char** argv)
             using namespace dbcppp::Network2Human;
             std::cout << "human\n";
             std::cout << *net;
+        } 
+        else 
+        {
+            std::cout << "Usage:\ndbcppp dbc2c [--help] <format> <dbc filename>\n";
+            std::cout << "format be C, DBC or human\n";
+            return 1;
         }
     }
     else if (std::string("decode") == argv[1])
