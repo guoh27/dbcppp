@@ -51,25 +51,16 @@ std::unique_ptr<INetwork> INetwork::Create(
     }
     for (auto& ad : attribute_definitions)
     {
-        if(ad->ObjectType() != IAttributeDefinition::EObjectType::Network){
-            throw std::runtime_error("Create INetwork with non network AttributeDefination: " + ad->Name());
-        }
         ads.push_back(std::move(static_cast<AttributeDefinitionImpl&>(*ad)));
         ad.reset(nullptr);
     }
     for (auto& ad : attribute_defaults)
     {
-        if(ad->ObjectType() != IAttributeDefinition::EObjectType::Network){
-            throw std::runtime_error("Create INetwork with non network AttributeDefault: " + ad->Name());
-        }
         avds.push_back(std::move(static_cast<AttributeImpl&>(*ad)));
         ad.reset(nullptr);
     }
     for (auto& av : attribute_values)
     {
-        if(av->ObjectType() != IAttributeDefinition::EObjectType::Network){
-            throw std::runtime_error("Create INetwork with non network AttributeValues: " + av->Name());
-        }
         avs.push_back(std::move(static_cast<AttributeImpl&>(*av)));
         av.reset(nullptr);
     }
