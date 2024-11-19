@@ -391,26 +391,6 @@ static auto getSignals(const G_Network& gnet, const G_Message& m, Cache const& c
             , std::move(comment)
             , extended_value_type
             , std::move(signal_multiplexer_values));
-        if (ns->Error(ISignal::EErrorCode::SignalExceedsMessageSize))
-        {
-            std::cout << "Warning: The signals '" << m.name << "::" << s.name << "'"
-                << " start_bit + bit_size exceeds the byte size of the message! Ignoring this error will lead to garbage data when using the decode function of this signal." << std::endl;
-        }
-        if (ns->Error(ISignal::EErrorCode::WrongBitSizeForExtendedDataType))
-        {
-            std::cout << "Warning: The signals '" << m.name << "::" << s.name << "'"
-                << " bit_size does not fit the bit size of the specified ExtendedValueType." << std::endl;
-        }
-        if (ns->Error(ISignal::EErrorCode::MaschinesFloatEncodingNotSupported))
-        {
-            std::cout << "Warning: Signal '" << m.name << "::" << s.name << "'"
-                << " This warning appears when a signal uses type float but the system this programm is running on does not uses IEEE 754 encoding for floats." << std::endl;
-        }
-        if (ns->Error(ISignal::EErrorCode::MaschinesDoubleEncodingNotSupported))
-        {
-            std::cout << "Warning: Signal '" << m.name << "::" << s.name << "'"
-                << " This warning appears when a signal uses type double but the system this programm is running on does not uses IEEE 754 encoding for doubles." << std::endl;
-        }
         signals.emplace_back(std::move(ns));
     }
     return signals;
@@ -504,10 +484,6 @@ static auto getMessages(const G_Network& gnet, Cache const& cache)
             , std::move(attribute_values)
             , std::move(comment)
             , std::move(signal_groups));
-        if (msg->Error() == IMessage::EErrorCode::MuxValeWithoutMuxSignal)
-        {
-            std::cout << "Warning: Message " << msg->Name() << " does have mux value but no mux signal!" << std::endl;
-        }
         messages.emplace_back(std::move(msg));
     }
     return messages;
