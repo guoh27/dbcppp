@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <unordered_set>
 #include "MessageImpl.h"
 #include "Helper.h"
 
@@ -91,8 +92,25 @@ MessageImpl::MessageImpl(
     }
     if (have_mux_value && _mux_signal == nullptr)
     {
-        _error = EErrorCode::MuxValeWithoutMuxSignal;
+        SetError(EErrorCode::MuxValeWithoutMuxSignal);
     }
+
+    auto hasDuplicateNames = [](const std::vector<SignalImpl>& signals) {
+        std::unordered_set<std::string> names;
+        for (const auto& signal : signals) {
+            const std::string& name = signal.Name();
+            if (names.find(name) != names.end()) {
+                return true;
+            }
+            names.insert(name);
+        }
+        return false; 
+    };
+
+    if (hasDuplicateNames(_signals)) {
+        SetError(EErrorCode::SignalNameDuplicated);
+    }
+
 }
 MessageImpl::MessageImpl(const MessageImpl& other)
 {
@@ -199,9 +217,13 @@ const ISignal* MessageImpl::MuxSignal() const
 {
     return _mux_signal;
 }
-MessageImpl::EErrorCode MessageImpl::Error() const
+bool MessageImpl::Error(EErrorCode code) const
 {
-    return _error;
+    return code == _error || (uint64_t(_error) & uint64_t(code));
+}
+void MessageImpl::SetError(EErrorCode code)
+{
+    _error = EErrorCode(uint64_t(_error) | uint64_t(code));
 }
 
 const std::vector<SignalImpl>& MessageImpl::signals() const
@@ -292,7 +314,7 @@ void MessageImpl::Merge(MessageImpl &&o) {
     }
     if (have_mux_value && _mux_signal == nullptr)
     {
-        _error = EErrorCode::MuxValeWithoutMuxSignal;
+        SetError(EErrorCode::MuxValeWithoutMuxSignal);
     }
 }
 

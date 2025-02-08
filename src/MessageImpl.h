@@ -44,7 +44,7 @@ namespace dbcppp
         virtual uint64_t SignalGroups_Size() const override;
         virtual const ISignal* MuxSignal() const override;
         
-        virtual EErrorCode Error() const override;
+        virtual bool Error(EErrorCode code) const override;
         
         const std::vector<SignalImpl>& signals() const;
         
@@ -54,6 +54,9 @@ namespace dbcppp
         void Merge(MessageImpl &&other);
         
     private:
+
+        void SetError(EErrorCode code);
+
         uint64_t _id;
         std::string _name;
         uint64_t _message_size;

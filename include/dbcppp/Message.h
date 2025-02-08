@@ -20,7 +20,8 @@ namespace dbcppp
             : uint64_t
         {
             NoError,
-            MuxValeWithoutMuxSignal
+            MuxValeWithoutMuxSignal = 1,
+            SignalNameDuplicated = 2
         };
 
         static std::unique_ptr<IMessage> Create(
@@ -60,7 +61,7 @@ namespace dbcppp
         virtual bool operator==(const IMessage& message) const = 0;
         virtual bool operator!=(const IMessage& message) const = 0;
 
-        virtual EErrorCode Error() const = 0;
+        virtual bool Error(EErrorCode code) const = 0;
 
         void Merge(std::unique_ptr<IMessage>&& other);
     };

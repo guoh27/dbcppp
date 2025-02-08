@@ -879,7 +879,11 @@ std::unique_ptr<INetwork> INetwork::LoadDBCFromIs(std::istream& is, std::string 
     std::unique_ptr<dbcppp::INetwork> network;
     if (auto gnet = dbcppp::DBCX3::ParseFromMemory(str.c_str(), str.c_str() + str.size(), error_message))
     {
-        network = DBCAST2Network(*gnet);
+        try {
+            network = DBCAST2Network(*gnet);
+        } catch (const std::exception &e) {
+            error_message = e.what();
+        }
     }
     return network;
 }
