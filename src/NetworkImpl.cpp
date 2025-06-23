@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
+#include <unordered_map>
 #include "dbcppp/Network.h"
 #include "NetworkImpl.h"
 #include "Helper.h"
@@ -15,7 +16,7 @@ std::unique_ptr<INetwork> INetwork::Create(
     , std::vector<std::unique_ptr<IValueTable>>&& value_tables
     , std::vector<std::unique_ptr<IMessage>>&& messages
     , std::vector<std::unique_ptr<IEnvironmentVariable>>&& environment_variables
-    , std::vector<std::unique_ptr<IAttributeDefinition>>&& attribute_definitions
+    , std::vector<std::shared_ptr<IAttributeDefinition>>&& attribute_definitions
     , std::vector<std::unique_ptr<IAttribute>>&& attribute_defaults
     , std::vector<std::unique_ptr<IAttribute>>&& attribute_values
     , std::string&& comment)
@@ -26,7 +27,7 @@ std::unique_ptr<INetwork> INetwork::Create(
     std::vector<ValueTableImpl> vts;
     std::vector<MessageImpl> ms;
     std::vector<EnvironmentVariableImpl> evs;
-    std::vector<AttributeDefinitionImpl> ads;
+    std::vector<std::shared_ptr<AttributeDefinitionImpl>> ads;
     std::vector<AttributeImpl> avds;
     std::vector<AttributeImpl> avs;
     for (auto& n : nodes)
@@ -51,17 +52,19 @@ std::unique_ptr<INetwork> INetwork::Create(
     }
     for (auto& ad : attribute_definitions)
     {
-        ads.push_back(std::move(static_cast<AttributeDefinitionImpl&>(*ad)));
-        ad.reset(nullptr);
+        auto ptr = std::static_pointer_cast<AttributeDefinitionImpl>(ad);
+        ads.push_back(std::move(ptr));
     }
     for (auto& ad : attribute_defaults)
     {
-        avds.push_back(std::move(static_cast<AttributeImpl&>(*ad)));
+        AttributeImpl attr = std::move(static_cast<AttributeImpl&>(*ad));
+        avds.push_back(std::move(attr));
         ad.reset(nullptr);
     }
     for (auto& av : attribute_values)
     {
-        avs.push_back(std::move(static_cast<AttributeImpl&>(*av)));
+        AttributeImpl attr = std::move(static_cast<AttributeImpl&>(*av));
+        avs.push_back(std::move(attr));
         av.reset(nullptr);
     }
     return std::make_unique<NetworkImpl>(
@@ -86,7 +89,7 @@ NetworkImpl::NetworkImpl(
     , std::vector<ValueTableImpl>&& value_tables
     , std::vector<MessageImpl>&& messages
     , std::vector<EnvironmentVariableImpl>&& environment_variables
-    , std::vector<AttributeDefinitionImpl>&& attribute_definitions
+    , std::vector<std::shared_ptr<AttributeDefinitionImpl>>&& attribute_definitions
     , std::vector<AttributeImpl>&& attribute_defaults
     , std::vector<AttributeImpl>&& attribute_values
     , std::string&& comment)
@@ -157,7 +160,7 @@ uint64_t NetworkImpl::EnvironmentVariables_Size() const
 }
 const IAttributeDefinition& NetworkImpl::AttributeDefinitions_Get(std::size_t i) const
 {
-    return _attribute_definitions[i];
+    return *(_attribute_definitions[i]);
 }
 uint64_t NetworkImpl::AttributeDefinitions_Size() const
 {
@@ -226,7 +229,7 @@ std::vector<EnvironmentVariableImpl>& NetworkImpl::environmentVariables()
 {
     return _environment_variables;
 }
-std::vector<AttributeDefinitionImpl>& NetworkImpl::attributeDefinitions()
+std::vector<std::shared_ptr<AttributeDefinitionImpl>>& NetworkImpl::attributeDefinitions()
 {
     return _attribute_definitions;
 }
@@ -266,7 +269,25 @@ void INetwork::Merge(std::unique_ptr<INetwork>&& other)
     }
 
     unique_merge_by_name(self.environmentVariables(), o.environmentVariables());
-    unique_merge_by_name(self.attributeDefinitions(), o.attributeDefinitions());
+    auto merge_defs = [](auto& v1, auto& v2)
+    {
+        for (auto& item2 : v2)
+        {
+            auto it = std::find_if(v1.begin(), v1.end(), [&item2](const auto& item1)
+            {
+                return item1->Name() == item2->Name();
+            });
+            if (it != v1.end())
+            {
+                *it = std::move(item2);
+            }
+            else
+            {
+                v1.push_back(std::move(item2));
+            }
+        }
+    };
+    merge_defs(self.attributeDefinitions(), o.attributeDefinitions());
     unique_merge_by_name(self.attributeDefaults(), o.attributeDefaults());
     unique_merge_by_name(self.attributeValues(), o.attributeValues());
 
@@ -299,7 +320,9 @@ bool NetworkImpl::operator==(const INetwork& rhs) const
     }
     for (const auto& attr_def : rhs.AttributeDefinitions())
     {
-        equal &= std::find(_attribute_definitions.begin(), _attribute_definitions.end(), attr_def) != _attribute_definitions.end();
+        auto it = std::find_if(_attribute_definitions.begin(), _attribute_definitions.end(),
+            [&](const auto& self_def) { return *self_def == attr_def; });
+        equal &= it != _attribute_definitions.end();
     }
     for (const auto& attr : rhs.AttributeDefaults())
     {

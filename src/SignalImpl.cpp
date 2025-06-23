@@ -617,6 +617,10 @@ void SignalImpl::SetError(EErrorCode code)
 {
     _error = EErrorCode(uint64_t(_error) | uint64_t(code));
 }
+std::vector<AttributeImpl>& SignalImpl::attributeValues()
+{
+    return _attribute_values;
+}
 bool SignalImpl::operator==(const ISignal& rhs) const
 {
     bool equal = true;

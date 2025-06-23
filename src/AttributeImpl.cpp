@@ -6,18 +6,24 @@ using namespace dbcppp;
 std::unique_ptr<IAttribute> IAttribute::Create(
       std::string&& name
     , IAttributeDefinition::EObjectType object_type
-    , value_t value)
+    , value_t value
+    , std::shared_ptr<const IAttributeDefinition> definition)
 {
     return std::make_unique<AttributeImpl>(
           std::move(name)
         , object_type
-        , std::move(value));
+        , std::move(value)
+        , std::move(definition));
 }
 
-AttributeImpl::AttributeImpl(std::string&& name, IAttributeDefinition::EObjectType object_type, IAttribute::value_t value)
+AttributeImpl::AttributeImpl(std::string&& name,
+    IAttributeDefinition::EObjectType object_type,
+    IAttribute::value_t value,
+    std::shared_ptr<const IAttributeDefinition> definition)
     : _name(std::move(name))
     , _object_type(std::move(object_type))
     , _value(std::move(value))
+    , _definition(std::move(definition))
 {}
 std::unique_ptr<IAttribute> AttributeImpl::Clone() const
 {
@@ -34,6 +40,10 @@ IAttributeDefinition::EObjectType AttributeImpl::ObjectType() const
 const IAttribute::value_t& AttributeImpl::Value() const
 {
     return _value;
+}
+std::shared_ptr<const IAttributeDefinition> AttributeImpl::Definition() const
+{
+    return _definition;
 }
 bool AttributeImpl::operator==(const IAttribute& rhs) const
 {

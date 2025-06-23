@@ -61,6 +61,8 @@ namespace dbcppp
         virtual const ISignalMultiplexerValue& SignalMultiplexerValues_Get(std::size_t i) const override;
         virtual uint64_t SignalMultiplexerValues_Size() const override;
         virtual bool Error(EErrorCode code) const override;
+
+        std::vector<AttributeImpl>& attributeValues();
         
         virtual bool operator==(const ISignal& rhs) const override;
         virtual bool operator!=(const ISignal& rhs) const override;
@@ -100,3 +102,4 @@ namespace dbcppp
         EErrorCode _error;
     };
 }
+

@@ -23,7 +23,7 @@ namespace dbcppp
             , std::vector<ValueTableImpl>&& value_tables
             , std::vector<MessageImpl>&& messages
             , std::vector<EnvironmentVariableImpl>&& environment_variables
-            , std::vector<AttributeDefinitionImpl>&& attribute_definitions
+            , std::vector<std::shared_ptr<AttributeDefinitionImpl>>&& attribute_definitions
             , std::vector<AttributeImpl>&& attribute_defaults
             , std::vector<AttributeImpl>&& attribute_values
             , std::string&& comment);
@@ -62,7 +62,7 @@ namespace dbcppp
         std::vector<ValueTableImpl>& valueTables();
         std::vector<MessageImpl>& messages();
         std::vector<EnvironmentVariableImpl>& environmentVariables();
-        std::vector<AttributeDefinitionImpl>& attributeDefinitions();
+        std::vector<std::shared_ptr<AttributeDefinitionImpl>>& attributeDefinitions();
         std::vector<AttributeImpl>& attributeDefaults();
         std::vector<AttributeImpl>& attributeValues();
         std::string& comment();
@@ -75,7 +75,7 @@ namespace dbcppp
         std::vector<ValueTableImpl> _value_tables;
         std::vector<MessageImpl> _messages;
         std::vector<EnvironmentVariableImpl> _environment_variables;
-        std::vector<AttributeDefinitionImpl> _attribute_definitions;
+        std::vector<std::shared_ptr<AttributeDefinitionImpl>> _attribute_definitions;
         std::vector<AttributeImpl> _attribute_defaults;
         std::vector<AttributeImpl> _attribute_values;
         std::string _comment;

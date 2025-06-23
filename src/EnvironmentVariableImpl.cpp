@@ -185,3 +185,8 @@ bool EnvironmentVariableImpl::operator!=(const IEnvironmentVariable& rhs) const
 {
     return !(*this == rhs);
 }
+
+std::vector<AttributeImpl>& EnvironmentVariableImpl::attributeValues()
+{
+    return _attribute_values;
+}

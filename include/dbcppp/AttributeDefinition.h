@@ -45,6 +45,14 @@ namespace dbcppp
         {
             std::vector<std::string> values;
         };
+        enum class EDefinitionType
+        {
+            Int,
+            Hex,
+            Float,
+            String,
+            Enum
+        };
         using value_type_t = std::variant<ValueTypeInt, ValueTypeHex, ValueTypeFloat, ValueTypeString, ValueTypeEnum>;
         
         static std::unique_ptr<IAttributeDefinition> Create(
@@ -58,6 +66,7 @@ namespace dbcppp
         virtual EObjectType ObjectType() const = 0;
         virtual const std::string& Name() const = 0;
         virtual const value_type_t& ValueType() const = 0;
+        virtual EDefinitionType DefinitionType() const = 0;
         
         virtual bool operator==(const IAttributeDefinition& rhs) const = 0;
         virtual bool operator!=(const IAttributeDefinition& rhs) const = 0;

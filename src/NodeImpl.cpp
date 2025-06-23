@@ -62,3 +62,9 @@ bool NodeImpl::operator!=(const INode& rhs) const
 {
     return !(*this == rhs);
 }
+
+std::vector<AttributeImpl>& NodeImpl::attributeValues()
+{
+    return _attribute_values;
+}
+

@@ -230,6 +230,16 @@ const std::vector<SignalImpl>& MessageImpl::signals() const
 {
     return _signals;
 }
+
+std::vector<SignalImpl>& MessageImpl::signals()
+{
+    return _signals;
+}
+
+std::vector<AttributeImpl>& MessageImpl::attributeValues()
+{
+    return _attribute_values;
+}
 bool MessageImpl::operator==(const IMessage& rhs) const
 {
     bool equal = true;
