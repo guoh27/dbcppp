@@ -47,6 +47,8 @@ namespace dbcppp
         virtual bool Error(EErrorCode code) const override;
         
         const std::vector<SignalImpl>& signals() const;
+        std::vector<SignalImpl>& signals();
+        std::vector<AttributeImpl>& attributeValues();
         
         virtual bool operator==(const IMessage& rhs) const override;
         virtual bool operator!=(const IMessage& rhs) const override;
@@ -72,3 +74,4 @@ namespace dbcppp
         EErrorCode _error;
     };
 }
+

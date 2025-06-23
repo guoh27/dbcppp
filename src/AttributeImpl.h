@@ -21,6 +21,8 @@ namespace dbcppp
         virtual IAttributeDefinition::EObjectType ObjectType() const override;
         virtual const value_t& Value() const override;
         virtual const IAttributeDefinition* Definition() const override;
+
+        void SetDefinition(const IAttributeDefinition* definition);
         
         virtual bool operator==(const IAttribute& rhs) const override;
         virtual bool operator!=(const IAttribute& rhs) const override;

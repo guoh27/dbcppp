@@ -45,6 +45,11 @@ const IAttributeDefinition* AttributeImpl::Definition() const
 {
     return _definition;
 }
+
+void AttributeImpl::SetDefinition(const IAttributeDefinition* definition)
+{
+    _definition = definition;
+}
 bool AttributeImpl::operator==(const IAttribute& rhs) const
 {
     bool result = true;

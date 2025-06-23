@@ -48,6 +48,8 @@ namespace dbcppp
         virtual bool operator==(const IEnvironmentVariable& rhs) const override;
         virtual bool operator!=(const IEnvironmentVariable& rhs) const override;
 
+        std::vector<AttributeImpl>& attributeValues();
+
     private:
         std::string _name;
         EVarType _var_type;
@@ -64,3 +66,4 @@ namespace dbcppp
         std::string _comment;
     };
 }
+

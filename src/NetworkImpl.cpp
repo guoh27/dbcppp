@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
+#include <unordered_map>
 #include "dbcppp/Network.h"
 #include "NetworkImpl.h"
 #include "Helper.h"
@@ -29,6 +30,7 @@ std::unique_ptr<INetwork> INetwork::Create(
     std::vector<AttributeDefinitionImpl> ads;
     std::vector<AttributeImpl> avds;
     std::vector<AttributeImpl> avs;
+    std::unordered_map<const IAttributeDefinition*, const IAttributeDefinition*> def_map;
     for (auto& n : nodes)
     {
         ns.push_back(std::move(static_cast<NodeImpl&>(*n)));
@@ -51,18 +53,62 @@ std::unique_ptr<INetwork> INetwork::Create(
     }
     for (auto& ad : attribute_definitions)
     {
+        const IAttributeDefinition* old_ptr = ad.get();
         ads.push_back(std::move(static_cast<AttributeDefinitionImpl&>(*ad)));
+        const IAttributeDefinition* new_ptr = &ads.back();
+        def_map[old_ptr] = new_ptr;
         ad.reset(nullptr);
     }
+    auto update_attr = [&](AttributeImpl& attr)
+    {
+        auto it = def_map.find(attr.Definition());
+        if (it != def_map.end())
+        {
+            attr.SetDefinition(it->second);
+        }
+    };
     for (auto& ad : attribute_defaults)
     {
-        avds.push_back(std::move(static_cast<AttributeImpl&>(*ad)));
+        AttributeImpl attr = std::move(static_cast<AttributeImpl&>(*ad));
+        update_attr(attr);
+        avds.push_back(std::move(attr));
         ad.reset(nullptr);
     }
     for (auto& av : attribute_values)
     {
-        avs.push_back(std::move(static_cast<AttributeImpl&>(*av)));
+        AttributeImpl attr = std::move(static_cast<AttributeImpl&>(*av));
+        update_attr(attr);
+        avs.push_back(std::move(attr));
         av.reset(nullptr);
+    }
+
+    for (auto& node : ns)
+    {
+        for (auto& attr : node.attributeValues())
+        {
+            update_attr(attr);
+        }
+    }
+    for (auto& msg : ms)
+    {
+        for (auto& attr : msg.attributeValues())
+        {
+            update_attr(attr);
+        }
+        for (auto& sig : msg.signals())
+        {
+            for (auto& attr : sig.attributeValues())
+            {
+                update_attr(attr);
+            }
+        }
+    }
+    for (auto& ev : evs)
+    {
+        for (auto& attr : ev.attributeValues())
+        {
+            update_attr(attr);
+        }
     }
     return std::make_unique<NetworkImpl>(
           std::move(version)
