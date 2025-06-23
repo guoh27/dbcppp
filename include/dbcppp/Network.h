@@ -33,7 +33,7 @@ namespace dbcppp
             , std::vector<std::unique_ptr<IValueTable>>&& value_tables
             , std::vector<std::unique_ptr<IMessage>>&& messages
             , std::vector<std::unique_ptr<IEnvironmentVariable>>&& environment_variables
-            , std::vector<std::unique_ptr<IAttributeDefinition>>&& attribute_definitions
+            , std::vector<std::shared_ptr<IAttributeDefinition>>&& attribute_definitions
             , std::vector<std::unique_ptr<IAttribute>>&& attribute_defaults
             , std::vector<std::unique_ptr<IAttribute>>&& attribute_values
             , std::string&& comment);

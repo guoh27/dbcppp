@@ -3,6 +3,7 @@
 #include <string>
 #include <cstddef>
 #include <variant>
+#include <memory>
 
 #include "Export.h"
 #include "AttributeDefinition.h"
@@ -19,7 +20,7 @@ namespace dbcppp
               std::string&& name
             , IAttributeDefinition::EObjectType object_type
             , value_t value
-            , const IAttributeDefinition* definition = nullptr);
+            , std::shared_ptr<const IAttributeDefinition> definition = {});
             
         virtual std::unique_ptr<IAttribute> Clone() const = 0;
 
@@ -27,7 +28,7 @@ namespace dbcppp
         virtual const std::string& Name() const = 0;
         virtual IAttributeDefinition::EObjectType ObjectType() const = 0;
         virtual const value_t& Value() const = 0;
-        virtual const IAttributeDefinition* Definition() const = 0;
+        virtual std::shared_ptr<const IAttributeDefinition> Definition() const = 0;
 
         virtual bool operator==(const IAttribute& rhs) const = 0;
         virtual bool operator!=(const IAttribute& rhs) const = 0;

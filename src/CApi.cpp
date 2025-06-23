@@ -601,11 +601,11 @@ extern "C"
             ev.push_back(std::unique_ptr<IEnvironmentVariable>(evi));
             *environment_variables = nullptr;
         }
-        std::vector<std::unique_ptr<IAttributeDefinition>> adef;
+        std::vector<std::shared_ptr<IAttributeDefinition>> adef;
         for (; *attribute_definitions; attribute_definitions++)
         {
             AttributeDefinitionImpl* adefi = reinterpret_cast<AttributeDefinitionImpl*>(*attribute_definitions);
-            adef.push_back(std::unique_ptr<IAttributeDefinition>(adefi));
+            adef.push_back(std::shared_ptr<IAttributeDefinition>(adefi));
             *attribute_definitions = nullptr;
         }
         std::vector<std::unique_ptr<IAttribute>> ad;

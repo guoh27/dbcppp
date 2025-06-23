@@ -184,8 +184,8 @@ inline auto boost_variant_to_std_variant(variant_attr_value_t const& attr)
     return value;
 }
 
-static const IAttributeDefinition* find_attribute_definition(
-    const std::vector<std::unique_ptr<IAttributeDefinition>>& defs,
+static std::shared_ptr<const IAttributeDefinition> find_attribute_definition(
+    const std::vector<std::shared_ptr<IAttributeDefinition>>& defs,
     const std::string& name,
     IAttributeDefinition::EObjectType object_type)
 {
@@ -193,15 +193,15 @@ static const IAttributeDefinition* find_attribute_definition(
     {
         if (d->Name() == name && d->ObjectType() == object_type)
         {
-            return d.get();
+            return d;
         }
     }
-    return nullptr;
+    return {};
 }
 
 static IAttribute::value_t convert_attribute_value(
     variant_attr_value_t const& attr,
-    const IAttributeDefinition* def)
+    std::shared_ptr<const IAttributeDefinition> def)
 {
     if (!def)
     {
@@ -250,7 +250,7 @@ static IAttribute::value_t convert_attribute_value(
 }
 
 static auto getAttributeValues(const G_Network& gnet, const G_Node& n, Cache const& cache,
-    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
+    const std::vector<std::shared_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IAttribute>> attribute_values;
 
@@ -262,7 +262,7 @@ static auto getAttributeValues(const G_Network& gnet, const G_Node& n, Cache con
         for (auto av : node_it->second.Attributes) {
             auto const& attr = boost::get<G_AttributeNode>(*av);
             auto name = attr.attribute_name;
-            auto const* def = find_attribute_definition(attr_defs, name, IAttributeDefinition::EObjectType::Node);
+            auto def = find_attribute_definition(attr_defs, name, IAttributeDefinition::EObjectType::Node);
             auto value = convert_attribute_value(attr.value, def);
             auto attribute = IAttribute::Create(
                 std::move(name),
@@ -289,7 +289,7 @@ static auto getComment(const G_Network& gnet, const G_Node& n, Cache const& cach
     return comment;
 }
 static auto getNodes(const G_Network& gnet, Cache const& cache,
-    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
+    const std::vector<std::shared_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<INode>> nodes;
     for (const auto& n : gnet.nodes)
@@ -302,7 +302,7 @@ static auto getNodes(const G_Network& gnet, Cache const& cache,
     return nodes;
 }
 static auto getAttributeValues(const G_Network& gnet, const G_Message& m, const G_Signal& s, Cache const& cache,
-    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
+    const std::vector<std::shared_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IAttribute>> attribute_values;
     auto const message_it = cache.Messages.find(m.id);
@@ -316,7 +316,7 @@ static auto getAttributeValues(const G_Network& gnet, const G_Message& m, const 
             for (auto av : signal_it->second.Attributes)
             {
                 auto const& attr = boost::get<G_AttributeSignal>(*av);
-                auto const* def = find_attribute_definition(attr_defs, attr.attribute_name, IAttributeDefinition::EObjectType::Signal);
+                auto def = find_attribute_definition(attr_defs, attr.attribute_name, IAttributeDefinition::EObjectType::Signal);
                 auto value = convert_attribute_value(attr.value, def);
                 auto attribute = IAttribute::Create(
                     std::string(attr.attribute_name),
@@ -413,7 +413,7 @@ static auto getSignalMultiplexerValues(const G_Network& gnet, const std::string&
     return signal_multiplexer_values;
 }
 static auto getSignals(const G_Network& gnet, const G_Message& m, Cache const& cache,
-    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
+    const std::vector<std::shared_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<ISignal>> signals;
 
@@ -493,7 +493,7 @@ static auto getMessageTransmitters(const G_Network& gnet, const G_Message& m)
     return message_transmitters;
 }
 static auto getAttributeValues(const G_Network& gnet, const G_Message& m, Cache const& cache,
-    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
+    const std::vector<std::shared_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IAttribute>> attribute_values;
 
@@ -504,7 +504,7 @@ static auto getAttributeValues(const G_Network& gnet, const G_Message& m, Cache 
 
         for (auto av: message_it->second.Attributes) {
             auto const& attr = boost::get<G_AttributeMessage>(*av);
-            auto const* def = find_attribute_definition(attr_defs, attr.attribute_name, IAttributeDefinition::EObjectType::Message);
+            auto def = find_attribute_definition(attr_defs, attr.attribute_name, IAttributeDefinition::EObjectType::Message);
             auto value = convert_attribute_value(attr.value, def);
             auto attribute = IAttribute::Create(
                 std::string(attr.attribute_name),
@@ -548,7 +548,7 @@ static auto getSignalGroups(const G_Network& gnet, const G_Message& m)
     return signal_groups;
 }
 static auto getMessages(const G_Network& gnet, Cache const& cache,
-    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
+    const std::vector<std::shared_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IMessage>> messages;
 
@@ -597,7 +597,7 @@ static auto getValueDescriptions(const G_Network& gnet, const G_EnvironmentVaria
     return value_descriptions;
 }
 static auto getAttributeValues(const G_Network& gnet, const G_EnvironmentVariable& ev, const Cache& cache,
-    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
+    const std::vector<std::shared_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IAttribute>> attribute_values;
 
@@ -608,7 +608,7 @@ static auto getAttributeValues(const G_Network& gnet, const G_EnvironmentVariabl
 
         for (auto av : env_it->second.Attributes) {
             auto const& attr = boost::get<G_AttributeEnvVar>(*av);
-            auto const* def = find_attribute_definition(attr_defs, attr.attribute_name, IAttributeDefinition::EObjectType::EnvironmentVariable);
+            auto def = find_attribute_definition(attr_defs, attr.attribute_name, IAttributeDefinition::EObjectType::EnvironmentVariable);
             auto value = convert_attribute_value(attr.value, def);
             auto attribute = IAttribute::Create(
                 std::string(attr.attribute_name),
@@ -634,7 +634,7 @@ static auto getComment(const G_Network& gnet, const G_EnvironmentVariable& ev, C
     return comment;
 }
 static auto getEnvironmentVariables(const G_Network& gnet, Cache const& cache,
-    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
+    const std::vector<std::shared_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IEnvironmentVariable>> environment_variables;
     for (const auto& ev : gnet.environment_variables)
@@ -690,7 +690,7 @@ static auto getEnvironmentVariables(const G_Network& gnet, Cache const& cache,
 }
 static auto getAttributeDefinitions(const G_Network& gnet)
 {
-    std::vector<std::unique_ptr<IAttributeDefinition>> attribute_definitions;
+    std::vector<std::shared_ptr<IAttributeDefinition>> attribute_definitions;
     struct VisitorValueType
     {
         IAttributeDefinition::value_type_t operator()(const G_AttributeValueTypeInt& cn)
@@ -757,18 +757,18 @@ static auto getAttributeDefinitions(const G_Network& gnet)
         auto value = boost_variant_to_std_variant(cvt.value);
         std::visit(vvt, value);
         auto nad = IAttributeDefinition::Create(std::move(std::string(ad.name)), object_type, std::visit(vvt, value));
-        attribute_definitions.push_back(std::move(nad));
+        attribute_definitions.push_back(std::shared_ptr<IAttributeDefinition>(std::move(nad)));
     }
     return attribute_definitions;
 }
 static auto getAttributeDefaults(const G_Network& gnet,
-    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
+    const std::vector<std::shared_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IAttribute>> attribute_defaults;
     for (auto& ad : gnet.attribute_defaults)
     {
         auto value = boost_variant_to_std_variant(ad.value);
-        auto const* def = find_attribute_definition(attr_defs, ad.name, IAttributeDefinition::EObjectType::Network);
+        auto def = find_attribute_definition(attr_defs, ad.name, IAttributeDefinition::EObjectType::Network);
         auto nad = IAttribute::Create(
             std::string(ad.name),
             IAttributeDefinition::EObjectType::Network,
@@ -779,7 +779,7 @@ static auto getAttributeDefaults(const G_Network& gnet,
     return attribute_defaults;
 }
 static auto getAttributeValues(const G_Network& gnet, Cache const& cache,
-    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
+    const std::vector<std::shared_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IAttribute>> attribute_values;
 
@@ -788,7 +788,7 @@ static auto getAttributeValues(const G_Network& gnet, Cache const& cache,
     for (auto av : cache.NetworkAttributes)
     {
         auto const& attr = boost::get<G_AttributeNetwork>(*av);
-        auto const* def = find_attribute_definition(attr_defs, attr.attribute_name, IAttributeDefinition::EObjectType::Network);
+        auto def = find_attribute_definition(attr_defs, attr.attribute_name, IAttributeDefinition::EObjectType::Network);
         auto value = convert_attribute_value(attr.value, def);
         auto attribute = IAttribute::Create(
             std::string(attr.attribute_name),
