@@ -3,6 +3,7 @@
 #include <fstream>
 #include <variant>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 #include <cassert>
 
@@ -183,7 +184,73 @@ inline auto boost_variant_to_std_variant(variant_attr_value_t const& attr)
     return value;
 }
 
-static auto getAttributeValues(const G_Network& gnet, const G_Node& n, Cache const& cache)
+static const IAttributeDefinition* find_attribute_definition(
+    const std::vector<std::unique_ptr<IAttributeDefinition>>& defs,
+    const std::string& name,
+    IAttributeDefinition::EObjectType object_type)
+{
+    for (const auto& d : defs)
+    {
+        if (d->Name() == name && d->ObjectType() == object_type)
+        {
+            return d.get();
+        }
+    }
+    return nullptr;
+}
+
+static IAttribute::value_t convert_attribute_value(
+    variant_attr_value_t const& attr,
+    const IAttributeDefinition* def)
+{
+    if (!def)
+    {
+        return boost_variant_to_std_variant(attr);
+    }
+
+    const auto& vt = def->ValueType();
+
+    if (std::holds_alternative<IAttributeDefinition::ValueTypeInt>(vt) ||
+        std::holds_alternative<IAttributeDefinition::ValueTypeHex>(vt))
+    {
+        int64_t iv = 0;
+        switch (attr.which())
+        {
+        case 0: iv = boost::get<int64_t>(attr); break;
+        case 1: iv = static_cast<int64_t>(boost::get<double>(attr)); break;
+        case 2: iv = std::stoll(boost::get<std::string>(attr)); break;
+        default: break;
+        }
+        return IAttribute::value_t(iv);
+    }
+    else if (std::holds_alternative<IAttributeDefinition::ValueTypeFloat>(vt))
+    {
+        double dv = 0.0;
+        switch (attr.which())
+        {
+        case 0: dv = static_cast<double>(boost::get<int64_t>(attr)); break;
+        case 1: dv = boost::get<double>(attr); break;
+        case 2: dv = std::stod(boost::get<std::string>(attr)); break;
+        default: break;
+        }
+        return IAttribute::value_t(dv);
+    }
+    else
+    {
+        std::string sv;
+        switch (attr.which())
+        {
+        case 0: sv = std::to_string(boost::get<int64_t>(attr)); break;
+        case 1: sv = std::to_string(boost::get<double>(attr)); break;
+        case 2: sv = boost::get<std::string>(attr); break;
+        default: break;
+        }
+        return IAttribute::value_t(std::move(sv));
+    }
+}
+
+static auto getAttributeValues(const G_Network& gnet, const G_Node& n, Cache const& cache,
+    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IAttribute>> attribute_values;
 
@@ -195,8 +262,13 @@ static auto getAttributeValues(const G_Network& gnet, const G_Node& n, Cache con
         for (auto av : node_it->second.Attributes) {
             auto const& attr = boost::get<G_AttributeNode>(*av);
             auto name = attr.attribute_name;
-            auto value{boost_variant_to_std_variant(attr.value)};
-            auto attribute = IAttribute::Create(std::move(name), IAttributeDefinition::EObjectType::Node, std::move(value));
+            auto const* def = find_attribute_definition(attr_defs, name, IAttributeDefinition::EObjectType::Node);
+            auto value = convert_attribute_value(attr.value, def);
+            auto attribute = IAttribute::Create(
+                std::move(name),
+                IAttributeDefinition::EObjectType::Node,
+                std::move(value),
+                def);
             attribute_values.emplace_back(std::move(attribute));
         }
     }
@@ -216,19 +288,21 @@ static auto getComment(const G_Network& gnet, const G_Node& n, Cache const& cach
 
     return comment;
 }
-static auto getNodes(const G_Network& gnet, Cache const& cache)
+static auto getNodes(const G_Network& gnet, Cache const& cache,
+    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<INode>> nodes;
     for (const auto& n : gnet.nodes)
     {
         auto comment = getComment(gnet, n, cache);
-        auto attribute_values = getAttributeValues(gnet, n, cache);
+        auto attribute_values = getAttributeValues(gnet, n, cache, attr_defs);
         auto nn = INode::Create(std::string(n.name), std::move(comment), std::move(attribute_values));
         nodes.push_back(std::move(nn));
     }
     return nodes;
 }
-static auto getAttributeValues(const G_Network& gnet, const G_Message& m, const G_Signal& s, Cache const& cache)
+static auto getAttributeValues(const G_Network& gnet, const G_Message& m, const G_Signal& s, Cache const& cache,
+    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IAttribute>> attribute_values;
     auto const message_it = cache.Messages.find(m.id);
@@ -242,8 +316,13 @@ static auto getAttributeValues(const G_Network& gnet, const G_Message& m, const 
             for (auto av : signal_it->second.Attributes)
             {
                 auto const& attr = boost::get<G_AttributeSignal>(*av);
-                auto value{boost_variant_to_std_variant(attr.value)};
-                auto attribute = IAttribute::Create(std::string(attr.attribute_name), IAttributeDefinition::EObjectType::Signal, std::move(value));
+                auto const* def = find_attribute_definition(attr_defs, attr.attribute_name, IAttributeDefinition::EObjectType::Signal);
+                auto value = convert_attribute_value(attr.value, def);
+                auto attribute = IAttribute::Create(
+                    std::string(attr.attribute_name),
+                    IAttributeDefinition::EObjectType::Signal,
+                    std::move(value),
+                    def);
                 attribute_values.emplace_back(std::move(attribute));
             }
         }
@@ -333,7 +412,8 @@ static auto getSignalMultiplexerValues(const G_Network& gnet, const std::string&
     }
     return signal_multiplexer_values;
 }
-static auto getSignals(const G_Network& gnet, const G_Message& m, Cache const& cache)
+static auto getSignals(const G_Network& gnet, const G_Message& m, Cache const& cache,
+    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<ISignal>> signals;
 
@@ -342,7 +422,7 @@ static auto getSignals(const G_Network& gnet, const G_Message& m, Cache const& c
     for (const G_Signal& s : m.signals)
     {
         std::vector<std::string> receivers;
-        auto attribute_values = getAttributeValues(gnet, m, s, cache);
+        auto attribute_values = getAttributeValues(gnet, m, s, cache, attr_defs);
         auto value_descriptions = getValueDescriptions(gnet, m, s, cache);
         auto extended_value_type = getSignalExtendedValueType(gnet, m, s);
         auto multiplexer_indicator = ISignal::EMultiplexer::NoMux;
@@ -412,7 +492,8 @@ static auto getMessageTransmitters(const G_Network& gnet, const G_Message& m)
     }
     return message_transmitters;
 }
-static auto getAttributeValues(const G_Network& gnet, const G_Message& m, Cache const& cache)
+static auto getAttributeValues(const G_Network& gnet, const G_Message& m, Cache const& cache,
+    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IAttribute>> attribute_values;
 
@@ -423,8 +504,13 @@ static auto getAttributeValues(const G_Network& gnet, const G_Message& m, Cache 
 
         for (auto av: message_it->second.Attributes) {
             auto const& attr = boost::get<G_AttributeMessage>(*av);
-            auto value{boost_variant_to_std_variant(attr.value)};
-            auto attribute = IAttribute::Create(std::string(attr.attribute_name), IAttributeDefinition::EObjectType::Message, std::move(value));
+            auto const* def = find_attribute_definition(attr_defs, attr.attribute_name, IAttributeDefinition::EObjectType::Message);
+            auto value = convert_attribute_value(attr.value, def);
+            auto attribute = IAttribute::Create(
+                std::string(attr.attribute_name),
+                IAttributeDefinition::EObjectType::Message,
+                std::move(value),
+                def);
             attribute_values.emplace_back(std::move(attribute));
         }
     }
@@ -461,7 +547,8 @@ static auto getSignalGroups(const G_Network& gnet, const G_Message& m)
     }
     return signal_groups;
 }
-static auto getMessages(const G_Network& gnet, Cache const& cache)
+static auto getMessages(const G_Network& gnet, Cache const& cache,
+    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IMessage>> messages;
 
@@ -470,8 +557,8 @@ static auto getMessages(const G_Network& gnet, Cache const& cache)
     for (const auto& m : gnet.messages)
     {
         auto message_transmitters = getMessageTransmitters(gnet, m);
-        auto signals = getSignals(gnet, m, cache);
-        auto attribute_values = getAttributeValues(gnet, m, cache);
+        auto signals = getSignals(gnet, m, cache, attr_defs);
+        auto attribute_values = getAttributeValues(gnet, m, cache, attr_defs);
         auto comment = getComment(gnet, m, cache);
         auto signal_groups = getSignalGroups(gnet, m);
         auto msg = IMessage::Create(
@@ -509,7 +596,8 @@ static auto getValueDescriptions(const G_Network& gnet, const G_EnvironmentVaria
     }
     return value_descriptions;
 }
-static auto getAttributeValues(const G_Network& gnet, const G_EnvironmentVariable& ev, const Cache& cache)
+static auto getAttributeValues(const G_Network& gnet, const G_EnvironmentVariable& ev, const Cache& cache,
+    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IAttribute>> attribute_values;
 
@@ -520,8 +608,13 @@ static auto getAttributeValues(const G_Network& gnet, const G_EnvironmentVariabl
 
         for (auto av : env_it->second.Attributes) {
             auto const& attr = boost::get<G_AttributeEnvVar>(*av);
-            auto value = boost_variant_to_std_variant(attr.value);
-            auto attribute = IAttribute::Create(std::string(attr.attribute_name), IAttributeDefinition::EObjectType::EnvironmentVariable, std::move(value));
+            auto const* def = find_attribute_definition(attr_defs, attr.attribute_name, IAttributeDefinition::EObjectType::EnvironmentVariable);
+            auto value = convert_attribute_value(attr.value, def);
+            auto attribute = IAttribute::Create(
+                std::string(attr.attribute_name),
+                IAttributeDefinition::EObjectType::EnvironmentVariable,
+                std::move(value),
+                def);
             attribute_values.push_back(std::move(attribute));
         }
     }
@@ -540,7 +633,8 @@ static auto getComment(const G_Network& gnet, const G_EnvironmentVariable& ev, C
     }
     return comment;
 }
-static auto getEnvironmentVariables(const G_Network& gnet, Cache const& cache)
+static auto getEnvironmentVariables(const G_Network& gnet, Cache const& cache,
+    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IEnvironmentVariable>> environment_variables;
     for (const auto& ev : gnet.environment_variables)
@@ -549,7 +643,7 @@ static auto getEnvironmentVariables(const G_Network& gnet, Cache const& cache)
         IEnvironmentVariable::EAccessType access_type;
         std::vector<std::string> access_nodes = ev.access_nodes;
         auto value_descriptions = getValueDescriptions(gnet, ev, cache);
-        auto attribute_values = getAttributeValues(gnet, ev, cache);
+        auto attribute_values = getAttributeValues(gnet, ev, cache, attr_defs);
         auto comment = getComment(gnet, ev, cache);
         uint64_t data_size = 0;
         switch (ev.var_type)
@@ -667,18 +761,25 @@ static auto getAttributeDefinitions(const G_Network& gnet)
     }
     return attribute_definitions;
 }
-static auto getAttributeDefaults(const G_Network& gnet)
+static auto getAttributeDefaults(const G_Network& gnet,
+    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IAttribute>> attribute_defaults;
     for (auto& ad : gnet.attribute_defaults)
     {
         auto value = boost_variant_to_std_variant(ad.value);
-        auto nad = IAttribute::Create(std::string(ad.name), IAttributeDefinition::EObjectType::Network, value);
+        auto const* def = find_attribute_definition(attr_defs, ad.name, IAttributeDefinition::EObjectType::Network);
+        auto nad = IAttribute::Create(
+            std::string(ad.name),
+            IAttributeDefinition::EObjectType::Network,
+            value,
+            def);
         attribute_defaults.push_back(std::move(nad));
     }
     return attribute_defaults;
 }
-static auto getAttributeValues(const G_Network& gnet, Cache const& cache)
+static auto getAttributeValues(const G_Network& gnet, Cache const& cache,
+    const std::vector<std::unique_ptr<IAttributeDefinition>>& attr_defs)
 {
     std::vector<std::unique_ptr<IAttribute>> attribute_values;
 
@@ -687,11 +788,13 @@ static auto getAttributeValues(const G_Network& gnet, Cache const& cache)
     for (auto av : cache.NetworkAttributes)
     {
         auto const& attr = boost::get<G_AttributeNetwork>(*av);
-        auto value{boost_variant_to_std_variant(attr.value)};
+        auto const* def = find_attribute_definition(attr_defs, attr.attribute_name, IAttributeDefinition::EObjectType::Network);
+        auto value = convert_attribute_value(attr.value, def);
         auto attribute = IAttribute::Create(
-            std::string(attr.attribute_name)
-            , IAttributeDefinition::EObjectType::Network
-            , std::move(value));
+            std::string(attr.attribute_name),
+            IAttributeDefinition::EObjectType::Network,
+            std::move(value),
+            def);
         attribute_values.emplace_back(std::move(attribute));
     }
     return attribute_values;
@@ -844,17 +947,20 @@ std::unique_ptr<INetwork> DBCAST2Network(const G_Network& gnet)
         }
     }
 
+    auto attribute_definitions = getAttributeDefinitions(gnet);
+    auto attribute_defaults = getAttributeDefaults(gnet, attribute_definitions);
+    auto attribute_values = getAttributeValues(gnet, cache, attribute_definitions);
     return INetwork::Create(
           getVersion(gnet)
         , getNewSymbols(gnet)
         , getBitTiming(gnet)
-        , getNodes(gnet, cache)
+        , getNodes(gnet, cache, attribute_definitions)
         , getValueTables(gnet)
-        , getMessages(gnet, cache)
-        , getEnvironmentVariables(gnet, cache)
-        , getAttributeDefinitions(gnet)
-        , getAttributeDefaults(gnet)
-        , getAttributeValues(gnet, cache)
+        , getMessages(gnet, cache, attribute_definitions)
+        , getEnvironmentVariables(gnet, cache, attribute_definitions)
+        , std::move(attribute_definitions)
+        , std::move(attribute_defaults)
+        , std::move(attribute_values)
         , getComment(gnet, cache));
 }
 

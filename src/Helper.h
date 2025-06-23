@@ -3,6 +3,8 @@
 
 #include <string>
 #include <memory>
+#include <vector>
+#include <algorithm>
 
 #include "Export.h"
 
