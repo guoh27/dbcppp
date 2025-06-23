@@ -19,7 +19,16 @@ AttributeDefinitionImpl::AttributeDefinitionImpl(std::string&& name, EObjectType
     : _name(std::move(name))
     , _object_type(std::move(object_type))
     , _value_type(std::move(value_type))
-{}
+{
+    _definition_type = std::visit([](const auto& vt) {
+        using T = std::decay_t<decltype(vt)>;
+        if constexpr (std::is_same_v<T, ValueTypeInt>) return EDefinitionType::Int;
+        else if constexpr (std::is_same_v<T, ValueTypeHex>) return EDefinitionType::Hex;
+        else if constexpr (std::is_same_v<T, ValueTypeFloat>) return EDefinitionType::Float;
+        else if constexpr (std::is_same_v<T, ValueTypeString>) return EDefinitionType::String;
+        else return EDefinitionType::Enum;
+    }, _value_type);
+}
 std::unique_ptr<IAttributeDefinition> AttributeDefinitionImpl::Clone() const
 {
     return std::make_unique<AttributeDefinitionImpl>(*this);
@@ -35,6 +44,10 @@ const std::string& AttributeDefinitionImpl::Name() const
 const IAttributeDefinition::value_type_t& AttributeDefinitionImpl::ValueType() const
 {
     return _value_type;
+}
+IAttributeDefinition::EDefinitionType AttributeDefinitionImpl::DefinitionType() const
+{
+    return _definition_type;
 }
 bool AttributeDefinitionImpl::operator==(const IAttributeDefinition& rhs) const
 {

@@ -275,6 +275,7 @@ TEST_CASE("API Test: Attribute Definition Access", "[]")
         {
             REQUIRE(av.Definition());
             REQUIRE(av.Definition().get() == net_def);
+            REQUIRE(net_def->DefinitionType() == IAttributeDefinition::EDefinitionType::Int);
             REQUIRE(std::get<int64_t>(av.Value()) == 51);
             found = true;
         }
@@ -291,6 +292,7 @@ TEST_CASE("API Test: Attribute Definition Access", "[]")
         {
             REQUIRE(av.Definition());
             REQUIRE(av.Definition().get() == node_def);
+            REQUIRE(node_def->DefinitionType() == IAttributeDefinition::EDefinitionType::Int);
             REQUIRE(std::get<int64_t>(av.Value()) == 99);
             found = true;
         }
@@ -307,6 +309,7 @@ TEST_CASE("API Test: Attribute Definition Access", "[]")
         {
             REQUIRE(av.Definition());
             REQUIRE(av.Definition().get() == msg_def);
+            REQUIRE(msg_def->DefinitionType() == IAttributeDefinition::EDefinitionType::Float);
             REQUIRE(std::get<double>(av.Value()) == Catch::Approx(58.7));
             found = true;
         }
@@ -323,6 +326,7 @@ TEST_CASE("API Test: Attribute Definition Access", "[]")
         {
             REQUIRE(av.Definition());
             REQUIRE(av.Definition().get() == sig_def);
+            REQUIRE(sig_def->DefinitionType() == IAttributeDefinition::EDefinitionType::String);
             REQUIRE(std::get<std::string>(av.Value()) == "TestString");
             found = true;
         }
