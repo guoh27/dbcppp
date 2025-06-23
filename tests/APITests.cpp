@@ -2,6 +2,9 @@
 #include "Catch2.h"
 #include <dbcppp/CApi.h>
 #include <dbcppp/Network.h>
+#include <filesystem>
+#include "Config.h"
+#include <fstream>
 
 using namespace dbcppp;
 
@@ -244,3 +247,102 @@ TEST_CASE("API Test: Message", "[]")
         REQUIRE(dbcppp_MessageSignals_Size(msg) == 3);
     }
 }
+TEST_CASE("API Test: Attribute Definition Access", "[]")
+{
+    std::filesystem::path dbc_path = std::filesystem::path(TEST_FILES_PATH) / "dbc" / "attribute_definition_access.dbc";
+    std::ifstream dbc(dbc_path);
+    auto net = INetwork::LoadDBCFromIs(dbc);
+    REQUIRE(net);
+
+    auto find_def = [&](const std::string& name, IAttributeDefinition::EObjectType ot) -> const IAttributeDefinition*
+    {
+        for (const auto& def : net->AttributeDefinitions())
+        {
+            if (def.Name() == name && def.ObjectType() == ot)
+            {
+                return &def;
+            }
+        }
+        return nullptr;
+    };
+
+    const IAttributeDefinition* net_def = find_def("NetAttr", IAttributeDefinition::EObjectType::Network);
+    REQUIRE(net_def);
+    bool found = false;
+    for (const auto& av : net->AttributeValues())
+    {
+        if (av.Name() == "NetAttr")
+        {
+            REQUIRE(av.Definition());
+            REQUIRE(av.Definition().get() == net_def);
+            REQUIRE(std::get<std::string>(av.Value()) == "net-value");
+            found = true;
+        }
+    }
+    REQUIRE(found);
+
+    const auto& node = net->Nodes_Get(0);
+    const IAttributeDefinition* node_def = find_def("NodeAttr", IAttributeDefinition::EObjectType::Node);
+    REQUIRE(node_def);
+    found = false;
+    for (const auto& av : node.AttributeValues())
+    {
+        if (av.Name() == "NodeAttr")
+        {
+            REQUIRE(av.Definition());
+            REQUIRE(av.Definition().get() == node_def);
+            REQUIRE(std::get<int64_t>(av.Value()) == 7);
+            found = true;
+        }
+    }
+    REQUIRE(found);
+
+    const auto& msg = net->Messages_Get(0);
+    const IAttributeDefinition* msg_def = find_def("MsgAttr", IAttributeDefinition::EObjectType::Message);
+    REQUIRE(msg_def);
+    found = false;
+    for (const auto& av : msg.AttributeValues())
+    {
+        if (av.Name() == "MsgAttr")
+        {
+            REQUIRE(av.Definition());
+            REQUIRE(av.Definition().get() == msg_def);
+            REQUIRE(std::get<int64_t>(av.Value()) == 10);
+            found = true;
+        }
+    }
+    REQUIRE(found);
+
+    const auto& sig = msg.Signals_Get(0);
+    const IAttributeDefinition* sig_def = find_def("SigAttr", IAttributeDefinition::EObjectType::Signal);
+    REQUIRE(sig_def);
+    found = false;
+    for (const auto& av : sig.AttributeValues())
+    {
+        if (av.Name() == "SigAttr")
+        {
+            REQUIRE(av.Definition());
+            REQUIRE(av.Definition().get() == sig_def);
+            REQUIRE(std::get<double>(av.Value()) == Catch::Approx(5.5));
+            found = true;
+        }
+    }
+    REQUIRE(found);
+
+    const auto& env = net->EnvironmentVariables_Get(0);
+    const IAttributeDefinition* env_def = find_def("EnvAttr", IAttributeDefinition::EObjectType::EnvironmentVariable);
+    REQUIRE(env_def);
+    found = false;
+    for (const auto& av : env.AttributeValues())
+    {
+        if (av.Name() == "EnvAttr")
+        {
+            REQUIRE(av.Definition());
+            REQUIRE(av.Definition().get() == env_def);
+            REQUIRE(std::get<int64_t>(av.Value()) == 1);
+            found = true;
+        }
+    }
+    REQUIRE(found);
+}
+
