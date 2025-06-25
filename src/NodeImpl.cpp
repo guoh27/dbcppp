@@ -15,7 +15,7 @@ std::unique_ptr<INode> INode::Create(
         {
             throw std::runtime_error("Create INode with non node AttributeValues: " + av->Name());
         }
-        avs.push_back(std::move(static_cast<AttributeImpl&>(*av)));
+        avs.push_back(std::move(dynamic_cast<AttributeImpl&>(*av)));
         av.reset(nullptr);
     }
     return std::make_unique<NodeImpl>(std::move(name), std::move(comment), std::move(avs));

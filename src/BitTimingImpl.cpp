@@ -9,13 +9,13 @@ std::unique_ptr<IBitTiming> IBitTiming::Create(uint64_t baudrate, uint64_t BTR1,
 }
 BitTimingImpl::BitTimingImpl()
     : _baudrate(0)
-    , _BTR1(0)
-    , _BTR2(0)
+    , BTR1_(0)
+    , BTR2_(0)
 {}
 BitTimingImpl::BitTimingImpl(uint64_t baudrate, uint64_t BTR1, uint64_t BTR2)
-    : _baudrate(std::move(baudrate))
-    , _BTR1(std::move(BTR1))
-    , _BTR2(std::move(BTR2))
+    : _baudrate(baudrate)
+    , BTR1_(BTR1)
+    , BTR2_(BTR2)
 {}
 std::unique_ptr<IBitTiming> BitTimingImpl::Clone() const
 {
@@ -27,18 +27,18 @@ uint64_t BitTimingImpl::Baudrate() const
 }
 uint64_t BitTimingImpl::BTR1() const
 {
-    return _BTR1;
+    return BTR1_;
 }
 uint64_t BitTimingImpl::BTR2() const
 {
-    return _BTR2;
+    return BTR2_;
 }
 bool BitTimingImpl::operator==(const IBitTiming& rhs) const
 {
     bool result = true;
     result &= _baudrate == rhs.Baudrate();
-    result &= _BTR1 == rhs.BTR1();
-    result &= _BTR2 == rhs.BTR2();
+    result &= BTR1_ == rhs.BTR1();
+    result &= BTR2_ == rhs.BTR2();
     return result;
 }
 bool BitTimingImpl::operator!=(const IBitTiming& rhs) const

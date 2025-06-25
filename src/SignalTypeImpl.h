@@ -22,22 +22,22 @@ namespace dbcppp
             , double default_value
             , std::string&& value_table);
 
-        virtual std::unique_ptr<ISignalType> Clone() const override;
+        std::unique_ptr<ISignalType> Clone() const override;
 
-        virtual const std::string& Name() const override;
-        virtual uint64_t SignalSize() const override;
-        virtual ISignal::EByteOrder ByteOrder() const override;
-        virtual ISignal::EValueType ValueType() const override;
-        virtual double Factor() const override;
-        virtual double Offset() const override;
-        virtual double Minimum() const override;
-        virtual double Maximum() const override;
-        virtual const std::string& Unit() const override;
-        virtual double DefaultValue() const override;
-        virtual const std::string& ValueTable() const override;
+        const std::string& Name() const override;
+        uint64_t SignalSize() const override;
+        ISignal::EByteOrder ByteOrder() const override;
+        ISignal::EValueType ValueType() const override;
+        double Factor() const override;
+        double Offset() const override;
+        double Minimum() const override;
+        double Maximum() const override;
+        const std::string& Unit() const override;
+        double DefaultValue() const override;
+        const std::string& ValueTable() const override;
         
-        virtual bool operator==(const ISignalType& rhs) const override;
-        virtual bool operator!=(const ISignalType& rhs) const override;
+        bool operator==(const ISignalType& rhs) const override;
+        bool operator!=(const ISignalType& rhs) const override;
 
     private:
         std::string _name;
@@ -52,4 +52,4 @@ namespace dbcppp
         double _default_value;
         std::string _value_table;
     };
-}
+}  // namespace dbcppp

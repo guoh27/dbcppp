@@ -42,14 +42,14 @@ DBCPPP_API std::ostream& dbcppp::Network2C::operator<<(std::ostream& os, const I
     {
         for (const auto& sig : msg.Signals())
         {
-            const SignalImpl& sigi = static_cast<const SignalImpl&>(sig);
+            const auto& sigi = dynamic_cast<const SignalImpl&>(sig);
             os << boost::format(
                 "uint64_t dbcppp_decode_%s(const void* nbytes)\n"
                 "{\n"
                 "    uint64_t data;\n")
                 % (msg.Name() + "_" + std::to_string(msg.Id()) + "_" + sig.Name());
                             
-            uint64_t nbytes;
+            uint64_t nbytes = 0;
             if (sigi.ByteOrder() == ISignal::EByteOrder::LittleEndian)
             {
                 nbytes = (sigi.StartBit() % 8 + sigi.BitSize() + 7) / 8;

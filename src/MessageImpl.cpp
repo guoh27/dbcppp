@@ -22,16 +22,16 @@ std::unique_ptr<IMessage> IMessage::Create(
     std::vector<SignalGroupImpl> sgs;
     for (auto& s : signals_)
     {
-        ss.push_back(std::move(static_cast<SignalImpl&>(*s)));
+        ss.push_back(std::move(dynamic_cast<SignalImpl&>(*s)));
         s.reset(nullptr);
     }
     for (auto& av : attribute_values)
     {
         if (av->ObjectType() != IAttributeDefinition::EObjectType::Message)
         {
-            throw std::runtime_error("Create IMessage with non message AttributeDefination: " + av->Name());
+            throw std::runtime_error("Create IMessage with non message AttributeDefinition: " + av->Name());
         }
-        avs.push_back(std::move(static_cast<AttributeImpl&>(*av)));
+        avs.push_back(std::move(dynamic_cast<AttributeImpl&>(*av)));
         av.reset(nullptr);
     }
     for (auto& sg : signal_groups)
@@ -40,7 +40,7 @@ std::unique_ptr<IMessage> IMessage::Create(
         {
             throw std::runtime_error("Create IMessage with non message SignalGroup: " + sg->Name());
         }
-        sgs.push_back(std::move(static_cast<SignalGroupImpl&>(*sg)));
+        sgs.push_back(std::move(dynamic_cast<SignalGroupImpl&>(*sg)));
         sg.reset(nullptr);
     }
     return std::make_unique<MessageImpl>(
@@ -65,9 +65,9 @@ MessageImpl::MessageImpl(
     , std::string&& comment
     , std::vector<SignalGroupImpl>&& signal_groups)
     
-    : _id(std::move(id))
+    : _id(id)
     , _name(std::move(name))
-    , _message_size(std::move(message_size))
+    , _message_size(message_size)
     , _transmitter(std::move(transmitter))
     , _message_transmitters(std::move(message_transmitters))
     , _signals(std::move(signals_))
@@ -112,17 +112,8 @@ MessageImpl::MessageImpl(
     }
 
 }
-MessageImpl::MessageImpl(const MessageImpl& other)
+MessageImpl::MessageImpl(const MessageImpl& other) : _id(other._id), _name(other._name), _message_size(other._message_size), _transmitter(other._transmitter), _message_transmitters(other._message_transmitters), _signals(other._signals), _attribute_values(other._attribute_values), _comment(other._comment), _mux_signal(nullptr), _error(other._error)
 {
-    _id = other._id;
-    _name = other._name;
-    _message_size = other._message_size;
-    _transmitter = other._transmitter;
-    _message_transmitters = other._message_transmitters;
-    _signals = other._signals;
-    _attribute_values = other._attribute_values;
-    _comment = other._comment;
-    _mux_signal = nullptr;
     for (const auto& sig : _signals)
     {
         switch (sig.MultiplexerIndicator())
@@ -132,10 +123,13 @@ MessageImpl::MessageImpl(const MessageImpl& other)
             break;
         }
     }
-    _error = other._error;
+    
 }
 MessageImpl& MessageImpl::operator=(const MessageImpl& other)
 {
+    if(this == &other) 
+        return *this;
+
     _id = other._id;
     _name = other._name;
     _message_size = other._message_size;
@@ -329,7 +323,7 @@ void MessageImpl::Merge(MessageImpl &&o) {
 }
 
 void IMessage::Merge(std::unique_ptr<IMessage>&& other) {
-    auto& self = static_cast<MessageImpl&>(*this);
-    auto& o = static_cast<MessageImpl&>(*other);
+    auto& self = dynamic_cast<MessageImpl&>(*this);
+    auto& o = dynamic_cast<MessageImpl&>(*other);
     self.Merge(std::move(o));
 }

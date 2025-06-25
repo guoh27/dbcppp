@@ -15,8 +15,8 @@ enum class Alignment
 template <Alignment aAlignment, ISignal::EByteOrder aByteOrder, ISignal::EValueType aValueType, ISignal::EExtendedValueType aExtendedValueType>
 ISignal::raw_t template_decode(const ISignal* sig, const void* nbytes) noexcept
 {
-    const SignalImpl* sigi = static_cast<const SignalImpl*>(sig);
-    uint64_t data;
+    const auto* sigi = dynamic_cast<const SignalImpl*>(sig);
+    uint64_t data = 0;
     if constexpr (aAlignment == Alignment::signal_exceeds_64_bit_size_and_signal_does_not_fit_into_64_bit)
     {
         data = *reinterpret_cast<const uint64_t*>(&reinterpret_cast<const uint8_t*>(nbytes)[sigi->_byte_pos]);
@@ -210,7 +210,7 @@ decode_func_t make_decodeMuxSignal(Alignment a, ISignal::EByteOrder bo, ISignal:
 }
 void encode(const ISignal* sig, ISignal::raw_t raw, void* buffer) noexcept
 {
-    const SignalImpl* sigi = static_cast<const SignalImpl*>(sig);
+    const auto* sigi = dynamic_cast<const SignalImpl*>(sig);
     char* b = reinterpret_cast<char*>(buffer);
     if (sigi->ByteOrder() == ISignal::EByteOrder::BigEndian)
     {
@@ -259,14 +259,14 @@ void encode(const ISignal* sig, ISignal::raw_t raw, void* buffer) noexcept
 template <class T>
 double raw_to_phys(const ISignal* sig, ISignal::raw_t raw) noexcept
 {
-    const SignalImpl* sigi = static_cast<const SignalImpl*>(sig);
-    double draw = double(*reinterpret_cast<T*>(&raw));
+    const auto* sigi = dynamic_cast<const SignalImpl*>(sig);
+    auto draw = double(*reinterpret_cast<T*>(&raw));
     return draw * sigi->Factor() + sigi->Offset();
 }
 template <class T>
 ISignal::raw_t phys_to_raw(const ISignal* sig, double phys) noexcept
 {
-    const SignalImpl* sigi = static_cast<const SignalImpl*>(sig);
+    const auto* sigi = dynamic_cast<const SignalImpl*>(sig);
     T result = T((phys - sigi->Offset()) / sigi->Factor());
     return *reinterpret_cast<ISignal::raw_t*>(&result);
 }
@@ -295,19 +295,21 @@ std::unique_ptr<ISignal> ISignal::Create(
     std::vector<AttributeImpl> avs;
     for (auto& av : attribute_values)
     {
-        avs.push_back(std::move(static_cast<AttributeImpl&>(*av)));
+        avs.push_back(std::move(dynamic_cast<AttributeImpl&>(*av)));
         av.reset(nullptr);
     }
     std::vector<ValueEncodingDescriptionImpl> veds;
     for (auto& ved : value_encoding_descriptions)
     {
-        veds.push_back(std::move(static_cast<ValueEncodingDescriptionImpl&>(*ved)));
+        veds.push_back(std::move(dynamic_cast<ValueEncodingDescriptionImpl&>(*ved)));
         ved.reset(nullptr);
     }
     std::vector<SignalMultiplexerValueImpl> smvs;
+    
+    smvs.reserve(signal_multiplexer_values.size());
     for (auto& smv : signal_multiplexer_values)
     {
-        smvs.push_back(std::move(static_cast<SignalMultiplexerValueImpl&>(*smv)));
+        smvs.push_back(std::move(dynamic_cast<SignalMultiplexerValueImpl&>(*smv)));
     }
     result = std::make_unique<SignalImpl>(
           message_size
@@ -355,22 +357,22 @@ SignalImpl::SignalImpl(
     , std::vector<SignalMultiplexerValueImpl>&& signal_multiplexer_values)
     
     : _name(std::move(name))
-    , _multiplexer_indicator(std::move(multiplexer_indicator))
-    , _multiplexer_switch_value(std::move(multiplexer_switch_value))
-    , _start_bit(std::move(start_bit))
-    , _bit_size(std::move(bit_size))
-    , _byte_order(std::move(byte_order))
-    , _value_type(std::move(value_type))
-    , _factor(std::move(factor))
-    , _offset(std::move(offset))
-    , _minimum(std::move(minimum))
-    , _maximum(std::move(maximum))
+    , _multiplexer_indicator(multiplexer_indicator)
+    , _multiplexer_switch_value(multiplexer_switch_value)
+    , _start_bit(start_bit)
+    , _bit_size(bit_size)
+    , _byte_order(byte_order)
+    , _value_type(value_type)
+    , _factor(factor)
+    , _offset(offset)
+    , _minimum(minimum)
+    , _maximum(maximum)
     , _unit(std::move(unit))
     , _receivers(std::move(receivers))
     , _attribute_values(std::move(attribute_values))
     , _value_encoding_descriptions(std::move(value_encoding_descriptions))
     , _comment(std::move(comment))
-    , _extended_value_type(std::move(extended_value_type))
+    , _extended_value_type(extended_value_type)
     , _signal_multiplexer_values(std::move(signal_multiplexer_values))
     , _error(EErrorCode::NoError)
 {
@@ -423,7 +425,7 @@ SignalImpl::SignalImpl(
 
     _byte_pos = _start_bit / 8;
 
-    uint64_t nbytes;
+    uint64_t nbytes{};
     if (_byte_order == EByteOrder::LittleEndian)
     {
         nbytes = (_start_bit % 8 + _bit_size + 7) / 8;
@@ -710,7 +712,7 @@ void SignalImpl::Merge(SignalImpl &&o) {
 }
 
 void ISignal::Merge(std::unique_ptr<ISignal>&& other) {
-    auto& self = static_cast<SignalImpl&>(*this);
-    auto& o = static_cast<SignalImpl&>(*other);
+    auto& self = dynamic_cast<SignalImpl&>(*this);
+    auto& o = dynamic_cast<SignalImpl&>(*other);
     self.Merge(std::move(o));
 }

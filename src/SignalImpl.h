@@ -36,36 +36,36 @@ namespace dbcppp
             , EExtendedValueType extended_value_type
             , std::vector<SignalMultiplexerValueImpl>&& signal_multiplexer_values);
             
-        virtual std::unique_ptr<ISignal> Clone() const override;
+         std::unique_ptr<ISignal> Clone() const override;
 
-        virtual const std::string& Name() const override;
-        virtual EMultiplexer MultiplexerIndicator() const override;
-        virtual uint64_t MultiplexerSwitchValue() const override;
-        virtual uint64_t StartBit() const override;
-        virtual uint64_t BitSize() const override;
-        virtual EByteOrder ByteOrder() const override;
-        virtual EValueType ValueType() const override;
-        virtual double Factor() const override;
-        virtual double Offset() const override;
-        virtual double Minimum() const override;
-        virtual double Maximum() const override;
-        virtual const std::string& Unit() const override;
-        virtual const std::string& Receivers_Get(std::size_t i) const override;
-        virtual uint64_t Receivers_Size() const override;
-        virtual const IValueEncodingDescription& ValueEncodingDescriptions_Get(std::size_t i) const override;
-        virtual uint64_t ValueEncodingDescriptions_Size() const override;
-        virtual const IAttribute& AttributeValues_Get(std::size_t i) const override;
-        virtual uint64_t AttributeValues_Size() const override;
-        virtual const std::string& Comment() const override;
-        virtual EExtendedValueType ExtendedValueType() const override;
-        virtual const ISignalMultiplexerValue& SignalMultiplexerValues_Get(std::size_t i) const override;
-        virtual uint64_t SignalMultiplexerValues_Size() const override;
-        virtual bool Error(EErrorCode code) const override;
+        const std::string& Name() const override;
+        EMultiplexer MultiplexerIndicator() const override;
+        uint64_t MultiplexerSwitchValue() const override;
+        uint64_t StartBit() const override;
+        uint64_t BitSize() const override;
+        EByteOrder ByteOrder() const override;
+        EValueType ValueType() const override;
+        double Factor() const override;
+        double Offset() const override;
+        double Minimum() const override;
+        double Maximum() const override;
+        const std::string& Unit() const override;
+        const std::string& Receivers_Get(std::size_t i) const override;
+        uint64_t Receivers_Size() const override;
+        const IValueEncodingDescription& ValueEncodingDescriptions_Get(std::size_t i) const override;
+        uint64_t ValueEncodingDescriptions_Size() const override;
+        const IAttribute& AttributeValues_Get(std::size_t i) const override;
+        uint64_t AttributeValues_Size() const override;
+        const std::string& Comment() const override;
+        EExtendedValueType ExtendedValueType() const override;
+        const ISignalMultiplexerValue& SignalMultiplexerValues_Get(std::size_t i) const override;
+        uint64_t SignalMultiplexerValues_Size() const override;
+        bool Error(EErrorCode code) const override;
 
         std::vector<AttributeImpl>& attributeValues();
         
-        virtual bool operator==(const ISignal& rhs) const override;
-        virtual bool operator!=(const ISignal& rhs) const override;
+        bool operator==(const ISignal& rhs) const override;
+        bool operator!=(const ISignal& rhs) const override;
 
         void Merge(SignalImpl &&other);
 
@@ -101,5 +101,5 @@ namespace dbcppp
 
         EErrorCode _error;
     };
-}
+}  // namespace dbcppp
 

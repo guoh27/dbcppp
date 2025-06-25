@@ -26,14 +26,14 @@ std::unique_ptr<IEnvironmentVariable> IEnvironmentVariable::Create(
         {
             throw std::runtime_error("Create IEnvironmentVariable with non environmentVariable AttributeValues: " + av->Name());
         }
-        avs.push_back(std::move(static_cast<AttributeImpl&>(*av)));
+        avs.push_back(std::move(dynamic_cast<AttributeImpl&>(*av)));
         av.reset(nullptr);
     }
     std::vector<ValueEncodingDescriptionImpl> veds;
     veds.reserve(value_encoding_descriptions.size());
     for (auto& ved : value_encoding_descriptions)
     {
-        veds.push_back(std::move(static_cast<ValueEncodingDescriptionImpl&>(*ved)));
+        veds.push_back(std::move(dynamic_cast<ValueEncodingDescriptionImpl&>(*ved)));
         ved.reset(nullptr);
     }
     return std::make_unique<EnvironmentVariableImpl>(
@@ -68,16 +68,16 @@ EnvironmentVariableImpl::EnvironmentVariableImpl(
     , std::string&& comment)
     
     : _name(std::move(name))
-    , _var_type(std::move(var_type))
-    , _minimum(std::move(minimum))
-    , _maximum(std::move(maximum))
+    , _var_type(var_type)
+    , _minimum(minimum)
+    , _maximum(maximum)
     , _unit(std::move(unit))
-    , _initial_value(std::move(initial_value))
-    , _ev_id(std::move(ev_id))
-    , _access_type(std::move(access_type))
+    , _initial_value(initial_value)
+    , _ev_id(ev_id)
+    , _access_type(access_type)
     , _access_nodes(std::move(access_nodes))
     , _value_encoding_descriptions(std::move(value_encoding_descriptions))
-    , _data_size(std::move(data_size))
+    , _data_size(data_size)
     , _attribute_values(std::move(attribute_values))
     , _comment(std::move(comment))
 {}

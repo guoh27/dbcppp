@@ -10,15 +10,15 @@ namespace dbcppp
     public:
         AttributeDefinitionImpl(std::string&& name, EObjectType object_type, value_type_t value_type);
 
-        virtual std::unique_ptr<IAttributeDefinition> Clone() const override;
+        std::unique_ptr<IAttributeDefinition> Clone() const override;
 
-        virtual EObjectType ObjectType() const override;
-        virtual const std::string& Name() const override;
-        virtual const value_type_t& ValueType() const override;
-        virtual EDefinitionType DefinitionType() const override;
+        EObjectType ObjectType() const override;
+        const std::string& Name() const override;
+        const value_type_t& ValueType() const override;
+        EDefinitionType DefinitionType() const override;
 
-        virtual bool operator==(const IAttributeDefinition& rhs) const override;
-        virtual bool operator!=(const IAttributeDefinition& rhs) const override;
+        bool operator==(const IAttributeDefinition& rhs) const override;
+        bool operator!=(const IAttributeDefinition& rhs) const override;
 
     private:
         std::string _name;
@@ -26,4 +26,4 @@ namespace dbcppp
         value_type_t _value_type;
         EDefinitionType _definition_type;
     };
-}
+}  // namespace dbcppp

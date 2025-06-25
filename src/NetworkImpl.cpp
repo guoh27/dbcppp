@@ -21,7 +21,7 @@ std::unique_ptr<INetwork> INetwork::Create(
     , std::vector<std::unique_ptr<IAttribute>>&& attribute_values
     , std::string&& comment)
 {
-    BitTimingImpl bt = std::move(static_cast<BitTimingImpl&>(*bit_timing));
+    BitTimingImpl bt = std::move(dynamic_cast<BitTimingImpl&>(*bit_timing));
     bit_timing.reset(nullptr);
     std::vector<NodeImpl> ns;
     std::vector<ValueTableImpl> vts;
@@ -32,22 +32,22 @@ std::unique_ptr<INetwork> INetwork::Create(
     std::vector<AttributeImpl> avs;
     for (auto& n : nodes)
     {
-        ns.push_back(std::move(static_cast<NodeImpl&>(*n)));
+        ns.push_back(std::move(dynamic_cast<NodeImpl&>(*n)));
         n.reset(nullptr);
     }
     for (auto& vt : value_tables)
     {
-        vts.push_back(std::move(static_cast<ValueTableImpl&>(*vt)));
+        vts.push_back(std::move(dynamic_cast<ValueTableImpl&>(*vt)));
         vt.reset(nullptr);
     }
     for (auto& m : messages)
     {
-        ms.push_back(std::move(static_cast<MessageImpl&>(*m)));
+        ms.push_back(std::move(dynamic_cast<MessageImpl&>(*m)));
         m.reset(nullptr);
     }
     for (auto& ev : environment_variables)
     {
-        evs.push_back(std::move(static_cast<EnvironmentVariableImpl&>(*ev)));
+        evs.push_back(std::move(dynamic_cast<EnvironmentVariableImpl&>(*ev)));
         ev.reset(nullptr);
     }
     for (auto& ad : attribute_definitions)
@@ -57,13 +57,13 @@ std::unique_ptr<INetwork> INetwork::Create(
     }
     for (auto& ad : attribute_defaults)
     {
-        AttributeImpl attr = std::move(static_cast<AttributeImpl&>(*ad));
+        AttributeImpl attr = std::move(dynamic_cast<AttributeImpl&>(*ad));
         avds.push_back(std::move(attr));
         ad.reset(nullptr);
     }
     for (auto& av : attribute_values)
     {
-        AttributeImpl attr = std::move(static_cast<AttributeImpl&>(*av));
+        AttributeImpl attr = std::move(dynamic_cast<AttributeImpl&>(*av));
         avs.push_back(std::move(attr));
         av.reset(nullptr);
     }
@@ -247,8 +247,8 @@ std::string& NetworkImpl::comment()
 }
 void INetwork::Merge(std::unique_ptr<INetwork>&& other)
 {
-    auto& self = static_cast<NetworkImpl&>(*this);
-    auto& o = static_cast<NetworkImpl&>(*other);
+    auto& self = dynamic_cast<NetworkImpl&>(*this);
+    auto& o = dynamic_cast<NetworkImpl&>(*other);
 
     unique_merge(self.newSymbols(), o.newSymbols());
     unique_merge_by_name(self.nodes(), o.nodes());

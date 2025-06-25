@@ -27,31 +27,31 @@ namespace dbcppp
         MessageImpl& operator=(const MessageImpl& other);
         MessageImpl& operator=(MessageImpl&&) = default;
             
-        virtual std::unique_ptr<IMessage> Clone() const override;
+        std::unique_ptr<IMessage> Clone() const override;
         
-        virtual uint64_t Id() const override;
-        virtual const std::string& Name() const override;
-        virtual uint64_t MessageSize() const override;
-        virtual const std::string& Transmitter() const override;
-        virtual const std::string& MessageTransmitters_Get(std::size_t i) const override;
-        virtual uint64_t MessageTransmitters_Size() const override;
-        virtual const ISignal& Signals_Get(std::size_t i) const override;
-        virtual uint64_t Signals_Size() const override;
-        virtual const IAttribute& AttributeValues_Get(std::size_t i) const override;
-        virtual uint64_t AttributeValues_Size() const override;
-        virtual const std::string& Comment() const override;
-        virtual const ISignalGroup& SignalGroups_Get(std::size_t i) const override;
-        virtual uint64_t SignalGroups_Size() const override;
-        virtual const ISignal* MuxSignal() const override;
+        uint64_t Id() const override;
+        const std::string& Name() const override;
+        uint64_t MessageSize() const override;
+        const std::string& Transmitter() const override;
+        const std::string& MessageTransmitters_Get(std::size_t i) const override;
+        uint64_t MessageTransmitters_Size() const override;
+        const ISignal& Signals_Get(std::size_t i) const override;
+        uint64_t Signals_Size() const override;
+        const IAttribute& AttributeValues_Get(std::size_t i) const override;
+        uint64_t AttributeValues_Size() const override;
+        const std::string& Comment() const override;
+        const ISignalGroup& SignalGroups_Get(std::size_t i) const override;
+        uint64_t SignalGroups_Size() const override;
+        const ISignal* MuxSignal() const override;
         
-        virtual bool Error(EErrorCode code) const override;
+        bool Error(EErrorCode code) const override;
         
         const std::vector<SignalImpl>& signals() const;
         std::vector<SignalImpl>& signals();
         std::vector<AttributeImpl>& attributeValues();
         
-        virtual bool operator==(const IMessage& rhs) const override;
-        virtual bool operator!=(const IMessage& rhs) const override;
+        bool operator==(const IMessage& rhs) const override;
+        bool operator!=(const IMessage& rhs) const override;
 
         void Merge(MessageImpl &&other);
         
@@ -73,5 +73,5 @@ namespace dbcppp
 
         EErrorCode _error;
     };
-}
+}  // namespace dbcppp
 

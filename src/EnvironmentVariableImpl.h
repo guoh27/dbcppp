@@ -26,27 +26,27 @@ namespace dbcppp
             , std::vector<AttributeImpl>&& attribute_values
             , std::string&& comment);
             
-        virtual std::unique_ptr<IEnvironmentVariable> Clone() const override;
+        std::unique_ptr<IEnvironmentVariable> Clone() const override;
         
-        virtual const std::string& Name() const override;
-        virtual EVarType VarType() const override;
-        virtual double Minimum() const override;
-        virtual double Maximum() const override;
-        virtual const std::string& Unit() const override;
-        virtual double InitialValue() const override;
-        virtual uint64_t EvId() const override;
-        virtual EAccessType AccessType() const override;
-        virtual const std::string& AccessNodes_Get(std::size_t i) const override;
-        virtual uint64_t AccessNodes_Size() const override;
-        virtual const IValueEncodingDescription& ValueEncodingDescriptions_Get(std::size_t i) const override;
-        virtual uint64_t ValueEncodingDescriptions_Size() const override;
-        virtual uint64_t DataSize() const override;
-        virtual const IAttribute& AttributeValues_Get(std::size_t i) const override;
-        virtual uint64_t AttributeValues_Size() const override;
-        virtual const std::string& Comment() const override;
+        const std::string& Name() const override;
+        EVarType VarType() const override;
+        double Minimum() const override;
+        double Maximum() const override;
+        const std::string& Unit() const override;
+        double InitialValue() const override;
+        uint64_t EvId() const override;
+        EAccessType AccessType() const override;
+        const std::string& AccessNodes_Get(std::size_t i) const override;
+        uint64_t AccessNodes_Size() const override;
+        const IValueEncodingDescription& ValueEncodingDescriptions_Get(std::size_t i) const override;
+        uint64_t ValueEncodingDescriptions_Size() const override;
+        uint64_t DataSize() const override;
+        const IAttribute& AttributeValues_Get(std::size_t i) const override;
+        uint64_t AttributeValues_Size() const override;
+        const std::string& Comment() const override;
         
-        virtual bool operator==(const IEnvironmentVariable& rhs) const override;
-        virtual bool operator!=(const IEnvironmentVariable& rhs) const override;
+        bool operator==(const IEnvironmentVariable& rhs) const override;
+        bool operator!=(const IEnvironmentVariable& rhs) const override;
 
         std::vector<AttributeImpl>& attributeValues();
 
@@ -65,5 +65,5 @@ namespace dbcppp
         std::vector<AttributeImpl> _attribute_values;
         std::string _comment;
     };
-}
+}  // namespace dbcppp
 
