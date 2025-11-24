@@ -1,6 +1,7 @@
 #include "dbcppp/CApi.h"
 #include "NetworkImpl.h"
 #include "EnvironmentVariableImpl.h"
+#include <optional>
 
 using namespace dbcppp;
 
@@ -444,6 +445,17 @@ extern "C"
         auto env_var_i = reinterpret_cast<const EnvironmentVariableImpl*>(env_var);
         return env_var_i->AttributeValues_Size();
     }
+    DBCPPP_API const dbcppp_Attribute* dbcppp_EnvironmentVariableAttributeValueByName(const dbcppp_EnvironmentVariable* env_var, const char* name)
+    {
+        if (!name) { return nullptr; }
+        auto env_var_i = reinterpret_cast<const EnvironmentVariableImpl*>(env_var);
+        auto attr = env_var_i->AttributeValue(name);
+        if (attr)
+        {
+            return reinterpret_cast<const dbcppp_Attribute*>(&attr->get());
+        }
+        return nullptr;
+    }
     DBCPPP_API const char* dbcppp_EnvironmentVariableComment(const dbcppp_EnvironmentVariable* env_var)
     {
         auto env_var_i = reinterpret_cast<const EnvironmentVariableImpl*>(env_var);
@@ -546,6 +558,17 @@ extern "C"
         auto msgi = reinterpret_cast<const MessageImpl*>(msg);
         return msgi->AttributeValues_Size();
     }
+    DBCPPP_API const dbcppp_Attribute* dbcppp_MessageAttributeValueByName(const dbcppp_Message* msg, const char* name)
+    {
+        if (!name) { return nullptr; }
+        auto msgi = reinterpret_cast<const MessageImpl*>(msg);
+        auto attr = msgi->AttributeValue(name);
+        if (attr)
+        {
+            return reinterpret_cast<const dbcppp_Attribute*>(&attr->get());
+        }
+        return nullptr;
+    }
     DBCPPP_API const char* dbcppp_MessageComment(const dbcppp_Message* msg)
     {
         auto msgi = reinterpret_cast<const MessageImpl*>(msg);
@@ -619,7 +642,7 @@ extern "C"
         for (; *attribute_values; attribute_values++)
         {
             AttributeImpl* avi = reinterpret_cast<AttributeImpl*>(*attribute_values);
-            ad.push_back(std::unique_ptr<IAttribute>(avi));
+            av.push_back(std::unique_ptr<IAttribute>(avi));
             *attribute_values = nullptr;
         }
         std::string c(comment);
@@ -728,6 +751,17 @@ extern "C"
         auto neti = reinterpret_cast<const NetworkImpl*>(net);
         return neti->AttributeValues_Size();
     }
+    DBCPPP_API const dbcppp_Attribute* dbcppp_NetworkAttributeValueByName(const dbcppp_Network* net, const char* name)
+    {
+        if (!name) { return nullptr; }
+        auto neti = reinterpret_cast<const NetworkImpl*>(net);
+        auto attr = neti->AttributeValue(name);
+        if (attr)
+        {
+            return reinterpret_cast<const dbcppp_Attribute*>(&attr->get());
+        }
+        return nullptr;
+    }
     DBCPPP_API const char* dbcppp_NetworkComment(const dbcppp_Network* net)
     {
         auto neti = reinterpret_cast<const NetworkImpl*>(net);
@@ -755,15 +789,26 @@ extern "C"
         auto ni = reinterpret_cast<const NodeImpl*>(node);
         return ni->Name().c_str();
     }
-    DBCPPP_API const dbcppp_Attribute* dbcppp_NodeAttributeValues_Get(const dbcppp_Network* net, uint64_t i)
+    DBCPPP_API const dbcppp_Attribute* dbcppp_NodeAttributeValues_Get(const dbcppp_Node* node, uint64_t i)
     {
-        auto ni = reinterpret_cast<const NodeImpl*>(net);
+        auto ni = reinterpret_cast<const NodeImpl*>(node);
         return reinterpret_cast<const dbcppp_Attribute*>(&ni->AttributeValues_Get(i));
     }
-    DBCPPP_API uint64_t dbcppp_NodeAttributeValues_Size(const dbcppp_Network* net)
+    DBCPPP_API uint64_t dbcppp_NodeAttributeValues_Size(const dbcppp_Node* node)
     {
-        auto ni = reinterpret_cast<const NodeImpl*>(net);
+        auto ni = reinterpret_cast<const NodeImpl*>(node);
         return ni->AttributeValues_Size();
+    }
+    DBCPPP_API const dbcppp_Attribute* dbcppp_NodeAttributeValueByName(const dbcppp_Node* node, const char* name)
+    {
+        if (!name) { return nullptr; }
+        auto ni = reinterpret_cast<const NodeImpl*>(node);
+        auto attr = ni->AttributeValue(name);
+        if (attr)
+        {
+            return reinterpret_cast<const dbcppp_Attribute*>(&attr->get());
+        }
+        return nullptr;
     }
     DBCPPP_API const char* dbcppp_NodeComment(const dbcppp_Node* node)
     {
@@ -986,6 +1031,17 @@ extern "C"
     {
         auto sigi = reinterpret_cast<const SignalImpl*>(signal);
         return sigi->AttributeValues_Size();
+    }
+    DBCPPP_API const dbcppp_Attribute* dbcppp_SignalAttributeValueByName(const dbcppp_Signal* signal, const char* name)
+    {
+        if (!name) { return nullptr; }
+        auto sigi = reinterpret_cast<const SignalImpl*>(signal);
+        auto attr = sigi->AttributeValue(name);
+        if (attr)
+        {
+            return reinterpret_cast<const dbcppp_Attribute*>(&attr->get());
+        }
+        return nullptr;
     }
     DBCPPP_API const char* dbcppp_SignalComment(const dbcppp_Signal* sig)
     {

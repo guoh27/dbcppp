@@ -152,6 +152,7 @@ extern "C"
     DBCPPP_API uint64_t dbcppp_EnvironmentVariableDataSize(const dbcppp_EnvironmentVariable* env_var);
     DBCPPP_API const dbcppp_Attribute* dbcppp_EnvironmentVariableAttributeValues_Get(const dbcppp_EnvironmentVariable* env_var, uint64_t i);
     DBCPPP_API uint64_t dbcppp_EnvironmentVariableAttributeValues_Size(const dbcppp_EnvironmentVariable* env_var);
+    DBCPPP_API const dbcppp_Attribute* dbcppp_EnvironmentVariableAttributeValueByName(const dbcppp_EnvironmentVariable* env_var, const char* name);
     DBCPPP_API const char* dbcppp_EnvironmentVariableComment(const dbcppp_EnvironmentVariable* env_var);
 
     DBCPPP_API const dbcppp_Message* dbcppp_MessageCreate(
@@ -174,6 +175,7 @@ extern "C"
     DBCPPP_API uint64_t dbcppp_MessageSignals_Size(const dbcppp_Message* msg);
     DBCPPP_API const dbcppp_Attribute* dbcppp_MessageAttributeValues_Get(const dbcppp_Message* msg, uint64_t i);
     DBCPPP_API uint64_t dbcppp_MessageAttributeValues_Size(const dbcppp_Message* msg);
+    DBCPPP_API const dbcppp_Attribute* dbcppp_MessageAttributeValueByName(const dbcppp_Message* msg, const char* name);
     DBCPPP_API const char* dbcppp_MessageComment(const dbcppp_Message* msg);
     
     DBCPPP_API const dbcppp_Network* dbcppp_NetworkLoadDBCFromFile(const char* filename);
@@ -209,13 +211,15 @@ extern "C"
     DBCPPP_API uint64_t dbcppp_NetworkAttributeDefaults_Size(const dbcppp_Network* net);
     DBCPPP_API const dbcppp_Attribute* dbcppp_NetworkAttributeValues_Get(const dbcppp_Network* net, uint64_t i);
     DBCPPP_API uint64_t dbcppp_NetworkAttributeValues_Size(const dbcppp_Network* net);
+    DBCPPP_API const dbcppp_Attribute* dbcppp_NetworkAttributeValueByName(const dbcppp_Network* net, const char* name);
     DBCPPP_API const char* dbcppp_NetworkComment(const dbcppp_Network* net);
 
     DBCPPP_API const dbcppp_Node* dbcppp_NodeCreate(const char* name, const char* comment, dbcppp_Attribute** attributes);
     DBCPPP_API void dbcppp_NodeFree(const dbcppp_Node* node);
     DBCPPP_API const char* dbcppp_NodeName(const dbcppp_Node* node);
-    DBCPPP_API const dbcppp_Attribute* dbcppp_NodeAttributeValues_Get(const dbcppp_Network* net, uint64_t i);
-    DBCPPP_API uint64_t dbcppp_NodeAttributeValues_Size(const dbcppp_Network* net);
+    DBCPPP_API const dbcppp_Attribute* dbcppp_NodeAttributeValues_Get(const dbcppp_Node* node, uint64_t i);
+    DBCPPP_API uint64_t dbcppp_NodeAttributeValues_Size(const dbcppp_Node* node);
+    DBCPPP_API const dbcppp_Attribute* dbcppp_NodeAttributeValueByName(const dbcppp_Node* node, const char* name);
     DBCPPP_API const char* dbcppp_NodeComment(const dbcppp_Node* node);
 
     DBCPPP_API const dbcppp_Signal* dbcppp_SignalCreate(
@@ -260,6 +264,7 @@ extern "C"
     DBCPPP_API uint64_t dbcppp_SignalValueEncodingDescriptions_Size(const dbcppp_Signal* signal);
     DBCPPP_API const dbcppp_Attribute* dbcppp_SignalAttributeValues_Get(const dbcppp_Signal* signal, uint64_t i);
     DBCPPP_API uint64_t dbcppp_SignalAttributeValues_Size(const dbcppp_Signal* signal);
+    DBCPPP_API const dbcppp_Attribute* dbcppp_SignalAttributeValueByName(const dbcppp_Signal* signal, const char* name);
     DBCPPP_API const char* dbcppp_SignalComment(const dbcppp_Signal* sig);
     DBCPPP_API dbcppp_ESignalExtendedValueType dbcppp_SignalExtended_ValueType(const dbcppp_Signal* sig);
     DBCPPP_API uint64_t dbcppp_SignalDecode(const dbcppp_Signal* sig, const void* bytes);
