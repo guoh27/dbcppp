@@ -1,5 +1,6 @@
 #include <algorithm>
 #include "NodeImpl.h"
+#include "dbcppp/Network.h"
 
 using namespace dbcppp;
 
@@ -45,6 +46,26 @@ uint64_t NodeImpl::AttributeValues_Size() const
 {
     return _attribute_values.size();
 }
+std::optional<std::reference_wrapper<const IAttribute>> NodeImpl::AttributeValue(const std::string& name) const
+{
+    auto it = std::find_if(_attribute_values.begin(), _attribute_values.end(),
+        [&](const AttributeImpl& attr) { return attr.Name() == name; });
+    if (it != _attribute_values.end())
+    {
+        return std::cref(static_cast<const IAttribute&>(*it));
+    }
+    if (_network)
+    {
+        for (const auto& attr : _network->AttributeDefaults())
+        {
+            if (attr.ObjectType() == IAttributeDefinition::EObjectType::Node && attr.Name() == name)
+            {
+                return std::cref(attr);
+            }
+        }
+    }
+    return std::nullopt;
+}
 bool NodeImpl::operator==(const INode& rhs) const
 {
     bool equal = true;
@@ -68,3 +89,7 @@ std::vector<AttributeImpl>& NodeImpl::attributeValues()
     return _attribute_values;
 }
 
+void NodeImpl::setNetwork(const INetwork* network)
+{
+    _network = network;
+}

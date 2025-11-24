@@ -11,6 +11,8 @@
 
 namespace dbcppp
 {
+    class INetwork;
+
     class SignalImpl final
         : public ISignal
     {
@@ -56,6 +58,7 @@ namespace dbcppp
         uint64_t ValueEncodingDescriptions_Size() const override;
         const IAttribute& AttributeValues_Get(std::size_t i) const override;
         uint64_t AttributeValues_Size() const override;
+        std::optional<std::reference_wrapper<const IAttribute>> AttributeValue(const std::string& name) const override;
         const std::string& Comment() const override;
         EExtendedValueType ExtendedValueType() const override;
         const ISignalMultiplexerValue& SignalMultiplexerValues_Get(std::size_t i) const override;
@@ -68,6 +71,7 @@ namespace dbcppp
         bool operator!=(const ISignal& rhs) const override;
 
         void Merge(SignalImpl &&other);
+        void setNetwork(const INetwork* network);
 
     private:
         void SetError(EErrorCode code);
@@ -90,6 +94,7 @@ namespace dbcppp
         std::string _comment;
         EExtendedValueType _extended_value_type;
         std::vector<SignalMultiplexerValueImpl> _signal_multiplexer_values;
+        const INetwork* _network = nullptr;
 
     public:
         // for performance
@@ -102,4 +107,3 @@ namespace dbcppp
         EErrorCode _error;
     };
 }  // namespace dbcppp
-

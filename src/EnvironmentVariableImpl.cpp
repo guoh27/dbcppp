@@ -1,5 +1,6 @@
 #include <algorithm>
 #include "EnvironmentVariableImpl.h"
+#include "dbcppp/Network.h"
 
 using namespace dbcppp;
 
@@ -145,6 +146,26 @@ uint64_t EnvironmentVariableImpl::AttributeValues_Size() const
 {
     return _attribute_values.size();
 }
+std::optional<std::reference_wrapper<const IAttribute>> EnvironmentVariableImpl::AttributeValue(const std::string& name) const
+{
+    auto it = std::find_if(_attribute_values.begin(), _attribute_values.end(),
+        [&](const AttributeImpl& attr) { return attr.Name() == name; });
+    if (it != _attribute_values.end())
+    {
+        return std::cref(static_cast<const IAttribute&>(*it));
+    }
+    if (_network)
+    {
+        for (const auto& attr : _network->AttributeDefaults())
+        {
+            if (attr.ObjectType() == IAttributeDefinition::EObjectType::EnvironmentVariable && attr.Name() == name)
+            {
+                return std::cref(attr);
+            }
+        }
+    }
+    return std::nullopt;
+}
 const std::string& EnvironmentVariableImpl::Comment() const
 {
     return _comment;
@@ -189,4 +210,9 @@ bool EnvironmentVariableImpl::operator!=(const IEnvironmentVariable& rhs) const
 std::vector<AttributeImpl>& EnvironmentVariableImpl::attributeValues()
 {
     return _attribute_values;
+}
+
+void EnvironmentVariableImpl::setNetwork(const INetwork* network)
+{
+    _network = network;
 }

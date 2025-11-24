@@ -2,11 +2,28 @@
 #include <fstream>
 #include <iomanip>
 #include <unordered_map>
+#include <optional>
 #include "dbcppp/Network.h"
 #include "NetworkImpl.h"
 #include "Helper.h"
 
 using namespace dbcppp;
+
+namespace
+{
+    std::optional<std::reference_wrapper<const IAttribute>> find_attribute_by_name(
+        const std::vector<AttributeImpl>& attributes,
+        const std::string& name)
+    {
+        auto it = std::find_if(attributes.begin(), attributes.end(),
+            [&](const AttributeImpl& attr) { return attr.Name() == name; });
+        if (it != attributes.end())
+        {
+            return std::cref(static_cast<const IAttribute&>(*it));
+        }
+        return std::nullopt;
+    }
+}
 
 std::unique_ptr<INetwork> INetwork::Create(
       std::string&& version
@@ -81,6 +98,38 @@ std::unique_ptr<INetwork> INetwork::Create(
         , std::move(comment));
 }
 
+NetworkImpl::NetworkImpl(const NetworkImpl& other)
+    : _version(other._version)
+    , _new_symbols(other._new_symbols)
+    , _bit_timing(other._bit_timing)
+    , _nodes(other._nodes)
+    , _value_tables(other._value_tables)
+    , _messages(other._messages)
+    , _environment_variables(other._environment_variables)
+    , _attribute_definitions(other._attribute_definitions)
+    , _attribute_defaults(other._attribute_defaults)
+    , _attribute_values(other._attribute_values)
+    , _comment(other._comment)
+{
+    setNetworkPointers();
+}
+
+NetworkImpl::NetworkImpl(NetworkImpl&& other) noexcept
+    : _version(std::move(other._version))
+    , _new_symbols(std::move(other._new_symbols))
+    , _bit_timing(std::move(other._bit_timing))
+    , _nodes(std::move(other._nodes))
+    , _value_tables(std::move(other._value_tables))
+    , _messages(std::move(other._messages))
+    , _environment_variables(std::move(other._environment_variables))
+    , _attribute_definitions(std::move(other._attribute_definitions))
+    , _attribute_defaults(std::move(other._attribute_defaults))
+    , _attribute_values(std::move(other._attribute_values))
+    , _comment(std::move(other._comment))
+{
+    setNetworkPointers();
+}
+
 NetworkImpl::NetworkImpl(
       std::string&& version
     , std::vector<std::string>&& new_symbols
@@ -105,7 +154,9 @@ NetworkImpl::NetworkImpl(
     , _attribute_defaults(std::move(attribute_defaults))
     , _attribute_values(std::move(attribute_values))
     , _comment(std::move(comment))
-{}
+{
+    setNetworkPointers();
+}
 std::unique_ptr<INetwork> NetworkImpl::Clone() const
 {
     return std::make_unique<NetworkImpl>(*this);
@@ -181,6 +232,18 @@ const IAttribute& NetworkImpl::AttributeValues_Get(std::size_t i) const
 uint64_t NetworkImpl::AttributeValues_Size() const
 {
     return _attribute_values.size();
+}
+std::optional<std::reference_wrapper<const IAttribute>> NetworkImpl::AttributeValue(const std::string& name) const
+{
+    if (auto attr = find_attribute_by_name(_attribute_values, name))
+    {
+        return *attr;
+    }
+    if (auto def = findAttributeDefault(IAttributeDefinition::EObjectType::Network, name))
+    {
+        return *def;
+    }
+    return std::nullopt;
 }
 const std::string& NetworkImpl::Comment() const
 {
@@ -291,6 +354,7 @@ void INetwork::Merge(std::unique_ptr<INetwork>&& other)
     unique_merge_by_name(self.attributeDefaults(), o.attributeDefaults());
     unique_merge_by_name(self.attributeValues(), o.attributeValues());
 
+    self.setNetworkPointers();
     other.reset(nullptr);
 }
 bool NetworkImpl::operator==(const INetwork& rhs) const
@@ -338,6 +402,78 @@ bool NetworkImpl::operator==(const INetwork& rhs) const
 bool NetworkImpl::operator!=(const INetwork& rhs) const
 {
     return !(*this == rhs);
+}
+
+NetworkImpl& NetworkImpl::operator=(const NetworkImpl& other)
+{
+    if (this != &other)
+    {
+        _version = other._version;
+        _new_symbols = other._new_symbols;
+        _bit_timing = other._bit_timing;
+        _nodes = other._nodes;
+        _value_tables = other._value_tables;
+        _messages = other._messages;
+        _environment_variables = other._environment_variables;
+        _attribute_definitions = other._attribute_definitions;
+        _attribute_defaults = other._attribute_defaults;
+        _attribute_values = other._attribute_values;
+        _comment = other._comment;
+        setNetworkPointers();
+    }
+    return *this;
+}
+
+NetworkImpl& NetworkImpl::operator=(NetworkImpl&& other) noexcept
+{
+    if (this != &other)
+    {
+        _version = std::move(other._version);
+        _new_symbols = std::move(other._new_symbols);
+        _bit_timing = std::move(other._bit_timing);
+        _nodes = std::move(other._nodes);
+        _value_tables = std::move(other._value_tables);
+        _messages = std::move(other._messages);
+        _environment_variables = std::move(other._environment_variables);
+        _attribute_definitions = std::move(other._attribute_definitions);
+        _attribute_defaults = std::move(other._attribute_defaults);
+        _attribute_values = std::move(other._attribute_values);
+        _comment = std::move(other._comment);
+        setNetworkPointers();
+    }
+    return *this;
+}
+
+std::optional<std::reference_wrapper<const IAttribute>> NetworkImpl::findAttributeDefault(
+    IAttributeDefinition::EObjectType object_type,
+    const std::string& name) const
+{
+    auto it = std::find_if(_attribute_defaults.begin(), _attribute_defaults.end(),
+        [&](const AttributeImpl& attr)
+        {
+            return attr.ObjectType() == object_type && attr.Name() == name;
+        });
+    if (it != _attribute_defaults.end())
+    {
+        return std::cref(static_cast<const IAttribute&>(*it));
+    }
+    return std::nullopt;
+}
+
+void NetworkImpl::setNetworkPointers()
+{
+    for (auto& node : _nodes)
+    {
+        node.setNetwork(this);
+    }
+    for (auto& msg : _messages)
+    {
+        msg.setNetwork(this);
+    }
+    for (auto& env_var : _environment_variables)
+    {
+        env_var.setNetwork(this);
+    }
 }
 
 std::unique_ptr<INetwork> INetwork::LoadNetworkFromFile(const std::filesystem::path& filename)

@@ -8,6 +8,7 @@
 #include "SignalTypeImpl.h"
 #include "AttributeDefinitionImpl.h"
 #include "AttributeImpl.h"
+#include <optional>
 
 namespace dbcppp
 {
@@ -15,6 +16,8 @@ namespace dbcppp
         : public INetwork
     {
     public:
+        NetworkImpl(const NetworkImpl& other);
+        NetworkImpl(NetworkImpl&& other) noexcept;
         NetworkImpl(
               std::string&& version
             , std::vector<std::string>&& new_symbols
@@ -48,12 +51,16 @@ namespace dbcppp
         uint64_t AttributeDefaults_Size() const override;
         const IAttribute& AttributeValues_Get(std::size_t i) const override;
         uint64_t AttributeValues_Size() const override;
+        std::optional<std::reference_wrapper<const IAttribute>> AttributeValue(const std::string& name) const override;
         const std::string& Comment() const override;
         
         const IMessage* ParentMessage(const ISignal* sig) const override;
         
         bool operator==(const INetwork& rhs) const override;
         bool operator!=(const INetwork& rhs) const override;
+
+        NetworkImpl& operator=(const NetworkImpl& other);
+        NetworkImpl& operator=(NetworkImpl&& other) noexcept;
 
         std::string& version();
         std::vector<std::string>& newSymbols();
@@ -66,6 +73,7 @@ namespace dbcppp
         std::vector<AttributeImpl>& attributeDefaults();
         std::vector<AttributeImpl>& attributeValues();
         std::string& comment();
+        void setNetworkPointers();
 
     private:
         std::string _version;
@@ -79,5 +87,9 @@ namespace dbcppp
         std::vector<AttributeImpl> _attribute_defaults;
         std::vector<AttributeImpl> _attribute_values;
         std::string _comment;
+
+        std::optional<std::reference_wrapper<const IAttribute>> findAttributeDefault(
+            IAttributeDefinition::EObjectType object_type,
+            const std::string& name) const;
     };
 }  // namespace dbcppp

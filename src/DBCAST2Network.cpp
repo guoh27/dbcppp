@@ -767,12 +767,19 @@ static auto getAttributeDefaults(const G_Network& gnet,
     std::vector<std::unique_ptr<IAttribute>> attribute_defaults;
     for (auto& ad : gnet.attribute_defaults)
     {
-        auto value = boost_variant_to_std_variant(ad.value);
-        auto def = find_attribute_definition(attr_defs, ad.name, IAttributeDefinition::EObjectType::Network);
+        std::shared_ptr<const IAttributeDefinition> def;
+        auto def_iter = std::find_if(attr_defs.begin(), attr_defs.end(),
+            [&](const auto& candidate) { return candidate->Name() == ad.name; });
+        if (def_iter != attr_defs.end())
+        {
+            def = *def_iter;
+        }
+        auto value = def ? convert_attribute_value(ad.value, def) : boost_variant_to_std_variant(ad.value);
+        auto object_type = def ? def->ObjectType() : IAttributeDefinition::EObjectType::Network;
         auto nad = IAttribute::Create(
             std::string(ad.name),
-            IAttributeDefinition::EObjectType::Network,
-            value,
+            object_type,
+            std::move(value),
             def);
         attribute_defaults.push_back(std::move(nad));
     }

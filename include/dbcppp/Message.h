@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <string>
 #include <memory>
+#include <optional>
 
 #include "Export.h"
 #include "Iterator.h"
@@ -48,6 +49,7 @@ namespace dbcppp
         virtual uint64_t Signals_Size() const = 0;
         virtual const IAttribute& AttributeValues_Get(std::size_t i) const = 0;
         virtual uint64_t AttributeValues_Size() const = 0;
+        virtual std::optional<std::reference_wrapper<const IAttribute>> AttributeValue(const std::string& name) const = 0;
         virtual const std::string& Comment() const = 0;
         virtual const ISignalGroup& SignalGroups_Get(std::size_t i) const = 0;
         virtual uint64_t SignalGroups_Size() const = 0;

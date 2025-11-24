@@ -8,6 +8,8 @@
 
 namespace dbcppp
 {
+    class INetwork;
+
     class MessageImpl final
         : public IMessage
     {
@@ -39,6 +41,7 @@ namespace dbcppp
         uint64_t Signals_Size() const override;
         const IAttribute& AttributeValues_Get(std::size_t i) const override;
         uint64_t AttributeValues_Size() const override;
+        std::optional<std::reference_wrapper<const IAttribute>> AttributeValue(const std::string& name) const override;
         const std::string& Comment() const override;
         const ISignalGroup& SignalGroups_Get(std::size_t i) const override;
         uint64_t SignalGroups_Size() const override;
@@ -54,6 +57,7 @@ namespace dbcppp
         bool operator!=(const IMessage& rhs) const override;
 
         void Merge(MessageImpl &&other);
+        void setNetwork(const INetwork* network);
         
     private:
 
@@ -70,8 +74,8 @@ namespace dbcppp
         std::vector<SignalGroupImpl> _signal_groups;
 
         const ISignal* _mux_signal;
+        const INetwork* _network = nullptr;
 
         EErrorCode _error;
     };
 }  // namespace dbcppp
-

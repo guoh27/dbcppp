@@ -7,6 +7,8 @@
 
 namespace dbcppp
 {
+    class INetwork;
+
     class EnvironmentVariableImpl final
         : public IEnvironmentVariable
     {
@@ -43,12 +45,14 @@ namespace dbcppp
         uint64_t DataSize() const override;
         const IAttribute& AttributeValues_Get(std::size_t i) const override;
         uint64_t AttributeValues_Size() const override;
+        std::optional<std::reference_wrapper<const IAttribute>> AttributeValue(const std::string& name) const override;
         const std::string& Comment() const override;
         
         bool operator==(const IEnvironmentVariable& rhs) const override;
         bool operator!=(const IEnvironmentVariable& rhs) const override;
 
         std::vector<AttributeImpl>& attributeValues();
+        void setNetwork(const INetwork* network);
 
     private:
         std::string _name;
@@ -64,6 +68,6 @@ namespace dbcppp
         uint64_t _data_size;
         std::vector<AttributeImpl> _attribute_values;
         std::string _comment;
+        const INetwork* _network = nullptr;
     };
 }  // namespace dbcppp
-

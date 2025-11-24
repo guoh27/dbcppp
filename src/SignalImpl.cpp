@@ -2,6 +2,7 @@
 #include <limits>
 #include "Helper.h"
 #include "SignalImpl.h"
+#include "dbcppp/Network.h"
 
 using namespace dbcppp;
 
@@ -595,6 +596,26 @@ uint64_t SignalImpl::AttributeValues_Size() const
 {
     return _attribute_values.size();
 }
+std::optional<std::reference_wrapper<const IAttribute>> SignalImpl::AttributeValue(const std::string& name) const
+{
+    auto it = std::find_if(_attribute_values.begin(), _attribute_values.end(),
+        [&](const AttributeImpl& attr) { return attr.Name() == name; });
+    if (it != _attribute_values.end())
+    {
+        return std::cref(static_cast<const IAttribute&>(*it));
+    }
+    if (_network)
+    {
+        for (const auto& attr : _network->AttributeDefaults())
+        {
+            if (attr.ObjectType() == IAttributeDefinition::EObjectType::Signal && attr.Name() == name)
+            {
+                return std::cref(attr);
+            }
+        }
+    }
+    return std::nullopt;
+}
 const std::string& SignalImpl::Comment() const
 {
     return _comment;
@@ -709,6 +730,11 @@ void SignalImpl::Merge(SignalImpl &&o) {
     compare_set(_encode, o._encode);
     compare_set(_raw_to_phys, o._raw_to_phys);
     compare_set(_phys_to_raw, o._phys_to_raw);
+}
+
+void SignalImpl::setNetwork(const INetwork* network)
+{
+    _network = network;
 }
 
 void ISignal::Merge(std::unique_ptr<ISignal>&& other) {

@@ -14,9 +14,6 @@ option(BUILD_DBCPPP_SHARED "Build shared library" ON)
 
 find_package(Boost REQUIRED CONFIG)
 
-if(NOT Boost_FOUND)
-    message(FATAL "Boost not found. Using libdbcppp boost (third-party/boost)")
-endif()
 
 # CREATE LIBRARY
 

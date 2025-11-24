@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <optional>
 
 #include "Export.h"
 #include "Iterator.h"
@@ -25,6 +26,7 @@ namespace dbcppp
         virtual const std::string& Name() const = 0;
         virtual const IAttribute& AttributeValues_Get(std::size_t i) const = 0;
         virtual uint64_t AttributeValues_Size() const = 0;
+        virtual std::optional<std::reference_wrapper<const IAttribute>> AttributeValue(const std::string& name) const = 0;
         virtual const std::string& Comment() const = 0;
 
         DBCPPP_MAKE_ITERABLE(INode, AttributeValues, IAttribute);

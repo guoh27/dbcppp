@@ -334,3 +334,57 @@ TEST_CASE("API Test: Attribute Definition Access", "[]")
     REQUIRE(found);
 }
 
+TEST_CASE("AttributeValue resolves defaults", "[]")
+{
+    constexpr const char* test_dbc =
+        "VERSION \"\"\n"
+        "NS_ :\n"
+        "BS_:\n"
+        "BU_: Node0\n"
+        "BO_ 1 Msg0: 8 Node0\n"
+        " SG_ Sig0: 0|8@1+ (1,0) [0|255] \"\" Node0\n"
+        "EV_ Env0 : 0 [0|1] \"\" 0 0 DUMMY_NODE_VECTOR0 Node0;\n"
+        "BA_DEF_ \"NetAttr\" INT 0 100;\n"
+        "BA_DEF_ BU_ \"NodeAttr\" INT 0 100;\n"
+        "BA_DEF_ BO_ \"MsgAttr\" INT 0 100;\n"
+        "BA_DEF_ SG_ \"SigAttr\" INT 0 100;\n"
+        "BA_DEF_ EV_ \"EnvAttr\" INT 0 100;\n"
+        "BA_DEF_DEF_ \"NetAttr\" 1;\n"
+        "BA_DEF_DEF_ \"NodeAttr\" 2;\n"
+        "BA_DEF_DEF_ \"MsgAttr\" 3;\n"
+        "BA_DEF_DEF_ \"SigAttr\" 4;\n"
+        "BA_DEF_DEF_ \"EnvAttr\" 5;\n"
+        "BA_ \"NetAttr\" 10;\n"
+        "BA_ \"MsgAttr\" BO_ 1 13;\n";
+
+    std::istringstream iss(test_dbc);
+    auto net = INetwork::LoadDBCFromIs(iss);
+    REQUIRE(net);
+
+    auto net_attr = net->AttributeValue("NetAttr");
+    REQUIRE(net_attr);
+    REQUIRE(std::get<int64_t>(net_attr->get().Value()) == 10);
+
+    auto missing_net_attr = net->AttributeValue("UnknownAttr");
+    REQUIRE_FALSE(missing_net_attr);
+
+    const auto& node = net->Nodes_Get(0);
+    auto node_attr = node.AttributeValue("NodeAttr");
+    REQUIRE(node_attr);
+    REQUIRE(std::get<int64_t>(node_attr->get().Value()) == 2);
+
+    const auto& msg = net->Messages_Get(0);
+    auto msg_attr = msg.AttributeValue("MsgAttr");
+    REQUIRE(msg_attr);
+    REQUIRE(std::get<int64_t>(msg_attr->get().Value()) == 13);
+
+    const auto& sig = msg.Signals_Get(0);
+    auto sig_attr = sig.AttributeValue("SigAttr");
+    REQUIRE(sig_attr);
+    REQUIRE(std::get<int64_t>(sig_attr->get().Value()) == 4);
+
+    const auto& env = net->EnvironmentVariables_Get(0);
+    auto env_attr = env.AttributeValue("EnvAttr");
+    REQUIRE(env_attr);
+    REQUIRE(std::get<int64_t>(env_attr->get().Value()) == 5);
+}

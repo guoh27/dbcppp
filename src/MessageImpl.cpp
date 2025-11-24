@@ -2,6 +2,7 @@
 #include <unordered_set>
 #include "MessageImpl.h"
 #include "Helper.h"
+#include "dbcppp/Network.h"
 
 using namespace dbcppp;
 
@@ -112,7 +113,19 @@ MessageImpl::MessageImpl(
     }
 
 }
-MessageImpl::MessageImpl(const MessageImpl& other) : _id(other._id), _name(other._name), _message_size(other._message_size), _transmitter(other._transmitter), _message_transmitters(other._message_transmitters), _signals(other._signals), _attribute_values(other._attribute_values), _comment(other._comment), _mux_signal(nullptr), _error(other._error)
+MessageImpl::MessageImpl(const MessageImpl& other)
+    : _id(other._id)
+    , _name(other._name)
+    , _message_size(other._message_size)
+    , _transmitter(other._transmitter)
+    , _message_transmitters(other._message_transmitters)
+    , _signals(other._signals)
+    , _attribute_values(other._attribute_values)
+    , _comment(other._comment)
+    , _signal_groups(other._signal_groups)
+    , _mux_signal(nullptr)
+    , _network(other._network)
+    , _error(other._error)
 {
     for (const auto& sig : _signals)
     {
@@ -123,7 +136,7 @@ MessageImpl::MessageImpl(const MessageImpl& other) : _id(other._id), _name(other
             break;
         }
     }
-    
+    setNetwork(_network);
 }
 MessageImpl& MessageImpl::operator=(const MessageImpl& other)
 {
@@ -138,6 +151,7 @@ MessageImpl& MessageImpl::operator=(const MessageImpl& other)
     _signals = other._signals;
     _attribute_values = other._attribute_values;
     _comment = other._comment;
+    _signal_groups = other._signal_groups;
     _mux_signal = nullptr;
     for (const auto& sig : _signals)
     {
@@ -149,6 +163,8 @@ MessageImpl& MessageImpl::operator=(const MessageImpl& other)
         }
     }
     _error = other._error;
+    _network = other._network;
+    setNetwork(_network);
     return *this;
 }
 std::unique_ptr<IMessage> MessageImpl::Clone() const
@@ -194,6 +210,26 @@ const IAttribute& MessageImpl::AttributeValues_Get(std::size_t i) const
 uint64_t MessageImpl::AttributeValues_Size() const
 {
     return _attribute_values.size();
+}
+std::optional<std::reference_wrapper<const IAttribute>> MessageImpl::AttributeValue(const std::string& name) const
+{
+    auto it = std::find_if(_attribute_values.begin(), _attribute_values.end(),
+        [&](const AttributeImpl& attr) { return attr.Name() == name; });
+    if (it != _attribute_values.end())
+    {
+        return std::cref(static_cast<const IAttribute&>(*it));
+    }
+    if (_network)
+    {
+        for (const auto& attr : _network->AttributeDefaults())
+        {
+            if (attr.ObjectType() == IAttributeDefinition::EObjectType::Message && attr.Name() == name)
+            {
+                return std::cref(attr);
+            }
+        }
+    }
+    return std::nullopt;
 }
 const std::string& MessageImpl::Comment() const
 {
@@ -319,6 +355,15 @@ void MessageImpl::Merge(MessageImpl &&o) {
     if (have_mux_value && _mux_signal == nullptr)
     {
         SetError(EErrorCode::MuxValeWithoutMuxSignal);
+    }
+}
+
+void MessageImpl::setNetwork(const INetwork* network)
+{
+    _network = network;
+    for (auto& sig : _signals)
+    {
+        sig.setNetwork(network);
     }
 }
 

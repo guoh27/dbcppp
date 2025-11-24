@@ -29,15 +29,23 @@ DBCPPP_API std::ostream& dbcppp::Network2DBC::operator<<(std::ostream& os, const
         std::ostream& _os;
     };
     std::string cmd = "BA_";
+    bool is_default = false;
     {
         auto beg = net.AttributeDefaults().begin();
         auto end = net.AttributeDefaults().end();
         if (std::find_if(beg, end, [&](const IAttribute& attr) { return &attr == &iattr; }) != end)
         {
             cmd = "BA_DEF_DEF_";
+            is_default = true;
         }
     }
     os << cmd << " \"" << iattr.Name() << "\"";
+    if (is_default)
+    {
+        std::visit(Visitor(os), iattr.Value());
+        os << ";\n";
+        return os;
+    }
     switch (iattr.ObjectType())
     {
     case IAttributeDefinition::EObjectType::Network:
